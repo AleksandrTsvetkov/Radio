@@ -96,6 +96,8 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
         let size = view.bounds.width - 120
         imageOutlet.frame = CGRect(x: (view.bounds.width - size) / 2, y: 140, width: size, height: size)
         imageOutlet.layer.cornerRadius = size / 2
+        imageOutlet.contentMode = .scaleAspectFit
+        imageOutlet.backgroundColor = UIColor(red: 13.0/255.0, green: 30.0/255.0, blue: 45.0/255.0, alpha: 1.0)
         imageOutlet.clipsToBounds = true
         imageOutlet.layer.borderWidth = 2
         imageOutlet.layer.borderColor = UIColor.white.cgColor
@@ -452,7 +454,7 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
         imageOutlet.animationDuration = 1.0
         imageOutlet.animationRepeatCount = 0
         if UIImage(named: databaseRadio[i].1) == nil {
-            imageOutlet.image = UIImage(named: "01a")!.crop(Data.size)
+            imageOutlet.image = UIImage(named: "01a")!
         } else {
             imageOutlet.image = UIImage(named: databaseRadio[i].1)
         }
@@ -461,7 +463,7 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
         imageOutlet.stopAnimating()
         imageOutlet.animationImages = nil
         if UIImage(named: databaseRadio[i].1) == nil {
-            imageOutlet.image = UIImage(named: "01a")!.crop(Data.size)
+            imageOutlet.image = UIImage(named: "01a")!
         } else {
             imageOutlet.image = UIImage(named: databaseRadio[i].1)
         }
