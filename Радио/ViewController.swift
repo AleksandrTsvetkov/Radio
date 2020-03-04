@@ -240,18 +240,26 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
     
     //MARK: - функция смены станций и старта плеера
     func changeStation (_ value: Int) {
+        var valueTemp = 0
+        print(databaseRadio.count)
+        if value > databaseRadio.count {
+            valueTemp = 0
+            i = 0
+        } else {
+            valueTemp = value
+        }
         
         //запоминание последней включенной станции
-        saveData[0] = value
+        saveData[0] = valueTemp
         saveDataFunc()
-        titleTextLabel.text = databaseRadio[value].2
+        titleTextLabel.text = databaseRadio[valueTemp].2
         
-        urlRadio = URL(string: String(databaseRadio[value].0))
+        urlRadio = URL(string: String(databaseRadio[valueTemp].0))
         inetPlayerItem = AVPlayerItem(url: urlRadio ?? URL(string: "http://www.ru")!)
         inetPlayer = AVPlayer(playerItem: inetPlayerItem)
         
         if play {
-            if let temp = UIImage(named: databaseRadio[value].1) {
+            if let temp = UIImage(named: databaseRadio[valueTemp].1) {
                 titleImage = temp
             } else {
                 titleImage = UIImage(named: "default")!
