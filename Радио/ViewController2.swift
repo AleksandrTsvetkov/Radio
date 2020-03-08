@@ -1,6 +1,6 @@
 import UIKit
 
-class ViewController2: UIViewController {
+final class ViewController2: UIViewController {
     
  //   var settingsButton = UIButton()
     var titleText = UILabel()
@@ -65,7 +65,7 @@ class ViewController2: UIViewController {
     }
     
     //выводим названия станций
-    func printStation() {
+    private func printStation() {
         stationText.text = ""
         var n = 1
         for value in databaseRadio {

@@ -1,15 +1,15 @@
 import UIKit
 
-var databaseRadio: [(String, String, String)] = []
-var saveDataRadio: [String] = []
-var saveData : [Any] = []
-var textColor = UIColor()
-var imageBack = UIImage()
-var imageNext = UIImage()
-var imagePlay = UIImage()
-var imagePause = UIImage()
-var themeImage = UIImage()
-var backgroundImage = UIImage()
+public var databaseRadio: [(String, String, String)] = []
+public var saveDataRadio: [String] = []
+public var saveData : [Any] = []
+public var textColor = UIColor()
+public var imageBack = UIImage()
+public var imageNext = UIImage()
+public var imagePlay = UIImage()
+public var imagePause = UIImage()
+public var themeImage = UIImage()
+public var backgroundImage = UIImage()
 
 //сохранение данных
 func saveDataFunc () {

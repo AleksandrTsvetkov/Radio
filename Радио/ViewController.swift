@@ -2,7 +2,7 @@ import UIKit
 import AVFoundation
 import MediaPlayer
 
-class ViewController: UIViewController, AVAudioPlayerDelegate {
+final class ViewController: UIViewController, AVAudioPlayerDelegate {
     
     var navigationBar = UINavigationBar()
     var play = true
@@ -229,7 +229,7 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
     }
 
     //MARK: - настройка слайдера громкости
-    func changeVolume() {
+    private func changeVolume() {
         let volumeSlider = UIView(frame: CGRect(x: 70, y: 589, width: 230, height: 25))
         volumeSlider.tintColor = .systemRed
         self.view.addSubview(volumeSlider)
@@ -239,9 +239,8 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
     }
     
     //MARK: - функция смены станций и старта плеера
-    func changeStation (_ value: Int) {
+    private func changeStation (_ value: Int) {
         var valueTemp = 0
-        print(databaseRadio.count)
         if value > databaseRadio.count {
             valueTemp = 0
             i = 0
@@ -320,7 +319,7 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
     }
     
     //настройка метаанных
-    func setupNowPlaying(title: String, setImage: UIImage?, artist: String?) {
+    private func setupNowPlaying(title: String, setImage: UIImage?, artist: String?) {
         var nowPlayingInfo = [String : Any]()
         nowPlayingInfo[MPMediaItemPropertyTitle] = title
         if let text = artist {
@@ -415,7 +414,7 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
     }
     
     //MARK: - Настройка кнопок управления в команд центре
-    func setupRemoteTransportControls() {
+    private func setupRemoteTransportControls() {
         let commandCenter = MPRemoteCommandCenter.shared()
         
         commandCenter.playCommand.addTarget { [unowned self] event in
@@ -457,7 +456,7 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
         }
     }
     
-    func startAnimation () {
+    private func startAnimation () {
         imageOutlet.animationImages = Data.imageArray
         imageOutlet.animationDuration = 1.0
         imageOutlet.animationRepeatCount = 0
@@ -467,7 +466,7 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
             imageOutlet.image = UIImage(named: databaseRadio[i].1)
         }
     }
-    func stopAnimation() {
+    private func stopAnimation() {
         imageOutlet.stopAnimating()
         imageOutlet.animationImages = nil
         if UIImage(named: databaseRadio[i].1) == nil {
