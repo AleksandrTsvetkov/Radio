@@ -2,7 +2,7 @@ import UIKit
 import AVFoundation
 import MediaPlayer
 
-final class ViewController: UIViewController, AVAudioPlayerDelegate {
+final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerItemMetadataOutputPushDelegate {
     
     var navigationBar = UINavigationBar()
     var play = true
@@ -28,6 +28,8 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate {
     var favoriteButton = UIButton()
     var shuffleButton = UIButton()
     var shuffleColor = textColor
+    weak var myDelegate: AVPlayerItemMetadataOutputPushDelegate?
+    var metadataOutput = AVPlayerItemMetadataOutput()
     
     //отвечает за номер радиостанции
     var i = 0 {
@@ -49,7 +51,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate {
     }
     
     var urlRadio: URL?
-    var inetPlayer: AVPlayer!
+    var inetPlayer = AVPlayer()
     var inetPlayerItem: AVPlayerItem!
     
     override func viewDidLoad() {
@@ -254,7 +256,11 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate {
         titleTextLabel.text = databaseRadio[valueTemp].2
         
         urlRadio = URL(string: String(databaseRadio[valueTemp].0))
-        inetPlayerItem = AVPlayerItem(url: urlRadio ?? URL(string: "http://www.ru")!)
+        inetPlayerItem = AVPlayerItem(asset: AVAsset(url: urlRadio ?? URL(string: "http://www.ru")!))
+        
+        metadataOutput = AVPlayerItemMetadataOutput(identifiers: nil)
+        metadataOutput.setDelegate(self, queue: DispatchQueue.main)
+        inetPlayerItem.add(metadataOutput)
         inetPlayer = AVPlayer(playerItem: inetPlayerItem)
         
         if play {
@@ -267,8 +273,6 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate {
             inetPlayer.play()
             timerTextLabel = Timer.scheduledTimer(timeInterval: 0.1, target:self, selector: #selector(updateTextLabel), userInfo: nil, repeats: true)
             
-            //Слежение за изменением Метадаты
-            inetPlayerItem.addObserver(self, forKeyPath: "timedMetadata", options: NSKeyValueObservingOptions(), context: nil)
             //обновляем метаданные для команд-центра
             timerTextLabel = Timer.scheduledTimer(timeInterval: 0.1, target:self, selector: #selector(nowPlaying), userInfo: nil, repeats: false)
             
@@ -302,14 +306,9 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate {
     //MARK: - Вывод метаданных в команд центре
     
     // Функция вывода метадаты
-    override func observeValue(forKeyPath: String?, of: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        if forKeyPath != "timedMetadata" { return }
-        let data: AVPlayerItem = of as! AVPlayerItem
-        if let tmp = data.timedMetadata {
-            for item in tmp {
-                metaDataLabel.text = (item.value as! String)
-            }
-        }
+    internal func metadataOutput(_ output: AVPlayerItemMetadataOutput, didOutputTimedMetadataGroups groups: [AVTimedMetadataGroup], from track: AVPlayerItemTrack?) {
+        let item = groups.first?.items.first
+        metaDataLabel.text = item?.value(forKeyPath: "value") as? String
     }
     
     //показываем что играем в команд-центре
@@ -318,7 +317,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate {
         timerTextLabel.invalidate()
     }
     
-    //настройка метаанных
+    //настройка метаданных
     private func setupNowPlaying(title: String, setImage: UIImage?, artist: String?) {
         var nowPlayingInfo = [String : Any]()
         nowPlayingInfo[MPMediaItemPropertyTitle] = title
