@@ -30,6 +30,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
     var shuffleColor = textColor
     weak var myDelegate: AVPlayerItemMetadataOutputPushDelegate?
     var metadataOutput = AVPlayerItemMetadataOutput()
+    var updateTextLabelCount = 1
     
     //отвечает за номер радиостанции
     var i = 0 {
@@ -183,7 +184,6 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         shuffleButton.addTarget(self, action: #selector(shuffleFunc), for: .touchUpInside)
         view.addSubview(shuffleButton)
         
-        
         changeVolume()
         
         //подключаем фоновое воспроизведение
@@ -271,10 +271,10 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
             }
             startAnimation()
             inetPlayer.play()
-            timerTextLabel = Timer.scheduledTimer(timeInterval: 0.1, target:self, selector: #selector(updateTextLabel), userInfo: nil, repeats: true)
             
             //обновляем метаданные для команд-центра
-            timerTextLabel = Timer.scheduledTimer(timeInterval: 0.1, target:self, selector: #selector(nowPlaying), userInfo: nil, repeats: false)
+            updateTextLabelCount = 1
+            timerTextLabel = Timer.scheduledTimer(timeInterval: 1.0, target:self, selector: #selector(updateTextLabel), userInfo: nil, repeats: true)
             
         } else {
             inetPlayer.pause()
@@ -289,17 +289,18 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         if inetPlayer.reasonForWaitingToPlay?.rawValue != nil {
             metaDataLabel.text = "Загружаю..."
         } else {
-            
-            timerTextLabel.invalidate()
             if UIImage(named: databaseRadio[i].1) == nil {
                 imageOutlet.startAnimating()
             } else {
                 imageOutlet.image = UIImage(named: databaseRadio[i].1)
             }
         }
-        
+        updateTextLabelCount += 1
+        if updateTextLabelCount == 5 {
+            timerTextLabel.invalidate()
+        }
         //показываем что играем в команд-центре
-        nowPlaying()
+        setupNowPlaying(title: titleTextLabel.text!, setImage: titleImage, artist: metaDataLabel.text)
     }
     
     
@@ -308,23 +309,22 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
     // Функция вывода метадаты
     internal func metadataOutput(_ output: AVPlayerItemMetadataOutput, didOutputTimedMetadataGroups groups: [AVTimedMetadataGroup], from track: AVPlayerItemTrack?) {
         let item = groups.first?.items.first
-        metaDataLabel.text = item?.value(forKeyPath: "value") as? String
+        if let temp = item?.value(forKeyPath: "value") as? String {
+            metaDataLabel.text = temp
+        } else {
+            metaDataLabel.text = ""
+        }
     }
-    
-    //показываем что играем в команд-центре
-    @objc func nowPlaying () {
-        setupNowPlaying(title: titleTextLabel.text!, setImage: titleImage, artist: metaDataLabel.text)
-        timerTextLabel.invalidate()
-    }
+
     
     //настройка метаданных
-    private func setupNowPlaying(title: String, setImage: UIImage?, artist: String?) {
+    private func setupNowPlaying(title: String, setImage: UIImage?, artist: String?){
         var nowPlayingInfo = [String : Any]()
         nowPlayingInfo[MPMediaItemPropertyTitle] = title
+        
         if let text = artist {
             nowPlayingInfo[MPMediaItemPropertyArtist] = text
         }
-        
         if let image = setImage {
             nowPlayingInfo[MPMediaItemPropertyArtwork] =
                 MPMediaItemArtwork(boundsSize: image.size) { size in

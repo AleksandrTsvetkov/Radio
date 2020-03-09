@@ -72,7 +72,6 @@ func loadStation () {
 //темная тема
 func darkThemeFunc (_ value: Bool) {
     if value {
-        
         UIApplication.shared.statusBarStyle = .lightContent
         textColor = .white
         imageBack = UIImage(named: "backwardDark.png")!
@@ -80,8 +79,7 @@ func darkThemeFunc (_ value: Bool) {
         imagePlay = UIImage(named: "playDark.png")!
         imagePause = UIImage(named: "pauseDark.png")!
         themeImage = UIImage(systemName: "sun.max.fill")!
-        backgroundImage = UIImage(named: "black.jpg")!
-        
+        backgroundImage = UIImage(named: "black.jpg")!        
     } else {
         UIApplication.shared.statusBarStyle = .default
         textColor = .black
@@ -91,7 +89,6 @@ func darkThemeFunc (_ value: Bool) {
         imagePause = UIImage(named: "pause.png")!
         themeImage = UIImage(systemName: "moon.stars.fill")!
         backgroundImage = UIImage(named: "white.jpg")!
-        
     }
 }
 
@@ -110,7 +107,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         //цвет кнопок в навигатор баре по умолчанию
         UINavigationBar.appearance().tintColor = .white
                 
-        
         self.window = UIWindow(frame: UIScreen.main.bounds)
         self.window?.rootViewController = navViewController
         
