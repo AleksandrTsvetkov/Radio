@@ -30,7 +30,6 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
     var shuffleColor = textColor
     weak var myDelegate: AVPlayerItemMetadataOutputPushDelegate?
     var metadataOutput = AVPlayerItemMetadataOutput()
-    var updateTextLabelCount = 1
     
     //отвечает за номер радиостанции
     var i = 0 {
@@ -193,6 +192,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         } catch {}
     }
     
+    
     //MARK: - кнопка смена темы
     @objc func changeTheme (_ sender: Any) {
         if self.inetPlayer.rate == 0.0 {
@@ -223,9 +223,6 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         } else {
             playOutlet.setImage(imagePlay, for: .normal)
         }
-        
-        //меняем цвет Title навигатор бара
-        navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: textColor]
         
         changeThemeValue = !changeThemeValue
     }
@@ -272,9 +269,8 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
             startAnimation()
             inetPlayer.play()
             
-            //обновляем метаданные для команд-центра
-            updateTextLabelCount = 1
-            timerTextLabel = Timer.scheduledTimer(timeInterval: 1.0, target:self, selector: #selector(updateTextLabel), userInfo: nil, repeats: true)
+            //Надпись "Загружаю..."
+            updateTextLabel()
             
         } else {
             inetPlayer.pause()
@@ -285,7 +281,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
     
     
     //MARK: - проверка началось ли воспроизведение и замена надписи "Загружаю..."
-    @objc func updateTextLabel () {
+    private func updateTextLabel () {
         if inetPlayer.reasonForWaitingToPlay?.rawValue != nil {
             metaDataLabel.text = "Загружаю..."
         } else {
@@ -295,18 +291,15 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
                 imageOutlet.image = UIImage(named: databaseRadio[i].1)
             }
         }
-        updateTextLabelCount += 1
-        if updateTextLabelCount == 5 {
-            timerTextLabel.invalidate()
-        }
-        //показываем что играем в команд-центре
+        
+        //передаем в команд-центр надпись "Загружаю..."
         setupNowPlaying(title: titleTextLabel.text!, setImage: titleImage, artist: metaDataLabel.text)
     }
     
     
     //MARK: - Вывод метаданных в команд центре
     
-    // Функция вывода метадаты
+    //загрузка метадаты
     internal func metadataOutput(_ output: AVPlayerItemMetadataOutput, didOutputTimedMetadataGroups groups: [AVTimedMetadataGroup], from track: AVPlayerItemTrack?) {
         let item = groups.first?.items.first
         if let temp = item?.value(forKeyPath: "value") as? String {
@@ -314,10 +307,12 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         } else {
             metaDataLabel.text = ""
         }
+        //передаем что играем в команд-центр
+        setupNowPlaying(title: titleTextLabel.text!, setImage: titleImage, artist: metaDataLabel.text)
     }
 
     
-    //настройка метаданных
+    //настройка и вывод метаданных в команд-центр
     private func setupNowPlaying(title: String, setImage: UIImage?, artist: String?){
         var nowPlayingInfo = [String : Any]()
         nowPlayingInfo[MPMediaItemPropertyTitle] = title
