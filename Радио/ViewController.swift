@@ -4,38 +4,35 @@ import MediaPlayer
 import Network
 
 //проверка наличия интернета
-class NetworkReachability {
-
+final class NetworkReachability {
     var pathMonitor: NWPathMonitor!
     var path: NWPath?
     lazy var pathUpdateHandler: ((NWPath) -> Void) = { path in
-    self.path = path
-    if path.status == NWPath.Status.satisfied {
-        internetValue = true
-    } else if path.status == NWPath.Status.unsatisfied {
-        internetValue = false
-    } else if path.status == NWPath.Status.requiresConnection {
-        internetValue = true
+        self.path = path
+        if path.status == NWPath.Status.satisfied {
+            internetValue = true
+        } else if path.status == NWPath.Status.unsatisfied {
+            internetValue = false
+        } else if path.status == NWPath.Status.requiresConnection {
+            internetValue = true
+        }
+    }
+    let backgroudQueue = DispatchQueue.global(qos: .background)
+    init() {
+        pathMonitor = NWPathMonitor()
+        pathMonitor.pathUpdateHandler = self.pathUpdateHandler
+        pathMonitor.start(queue: backgroudQueue)
+    }
+    private func isNetworkAvailable() -> Bool {
+        if let path = self.path {
+            if path.status == NWPath.Status.satisfied {
+            return true
+            }
+        }
+       return false
     }
 }
 
-let backgroudQueue = DispatchQueue.global(qos: .background)
-
-init() {
-    pathMonitor = NWPathMonitor()
-    pathMonitor.pathUpdateHandler = self.pathUpdateHandler
-    pathMonitor.start(queue: backgroudQueue)
-   }
-
- func isNetworkAvailable() -> Bool {
-        if let path = self.path {
-           if path.status == NWPath.Status.satisfied {
-            return true
-          }
-        }
-       return false
-   }
- }
 final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerItemMetadataOutputPushDelegate {
     
     var navigationBar = UINavigationBar()
@@ -65,6 +62,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
     weak var myDelegate: AVPlayerItemMetadataOutputPushDelegate?
     var metadataOutput = AVPlayerItemMetadataOutput()
     var networkReachability = NetworkReachability()
+    var checkInetTimer = Timer()
     
     //отвечает за номер радиостанции
     var i = 0 {
@@ -282,6 +280,8 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
             valueTemp = value
         }
         
+        checkInetTimer.invalidate()
+        
         //запоминание последней включенной станции
         saveData[0] = valueTemp
         saveDataFunc()
@@ -305,7 +305,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
             inetPlayer.play()
             
             //проверяем наличие интернета каждые 0.5 сек
-            _ = Timer.scheduledTimer(timeInterval: 0.5, target:self, selector: #selector(checkInternetConnection), userInfo: nil, repeats: true)
+            checkInetTimer = Timer.scheduledTimer(timeInterval: 0.5, target:self, selector: #selector(checkInternetConnection), userInfo: nil, repeats: true)
             
             //Надпись "Загружаю..."
             updateTextLabel()
@@ -319,13 +319,31 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
     
     //реакция - если пропал или появился интернет
     @objc private func checkInternetConnection () {
+        
         switch internetValue {
         case false where internetNow == true:
-            self.playButton((Any).self)
+            
+            imageOutlet.layer.borderWidth = 6
+            imageOutlet.layer.borderColor = UIColor.red.cgColor
+            metaDataLabel.textColor = .red
+            playOutlet.isEnabled = false
+            metaDataLabel.text = "Проблемы с интернетом"
+            playOutlet.setImage(imagePlay, for: .normal)
+            
+            //передаем эту запись в команд центр
+            setupNowPlaying(title: titleTextLabel.text!, setImage: titleImage, artist: metaDataLabel.text)
+            
         case true where internetNow == false:
-            self.playButton((Any).self)
+            changeStation(i)
+            imageOutlet.layer.borderWidth = 2
+            imageOutlet.layer.borderColor = UIColor.white.cgColor
+            metaDataLabel.textColor = textColor
+            playOutlet.isEnabled = true
+            playOutlet.setImage(imagePause, for: .normal)
+            
         default: break
         }
+        
         internetNow = internetValue
     }
     
@@ -461,7 +479,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         let commandCenter = MPRemoteCommandCenter.shared()
         
         commandCenter.playCommand.addTarget { [unowned self] event in
-            if self.inetPlayer.rate == 0.0 {
+            if self.inetPlayer.rate == 0.0 && internetValue {
                 self.playButton((Any).self)
                 return .success
             }
@@ -469,7 +487,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         }
         
         commandCenter.pauseCommand.addTarget { [unowned self] event in
-            if self.inetPlayer.rate == 1.0 {
+            if self.inetPlayer.rate == 1.0 && internetValue {
                 self.playButton((Any).self)
                 return .success
             }
