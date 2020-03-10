@@ -10,6 +10,8 @@ public var imagePlay = UIImage()
 public var imagePause = UIImage()
 public var themeImage = UIImage()
 public var backgroundImage = UIImage()
+public var internetValue = true
+public var internetNow = true
 
 //сохранение данных
 func saveDataFunc () {

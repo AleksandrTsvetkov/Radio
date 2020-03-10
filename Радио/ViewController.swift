@@ -1,7 +1,41 @@
 import UIKit
 import AVFoundation
 import MediaPlayer
+import Network
 
+//проверка наличия интернета
+class NetworkReachability {
+
+    var pathMonitor: NWPathMonitor!
+    var path: NWPath?
+    lazy var pathUpdateHandler: ((NWPath) -> Void) = { path in
+    self.path = path
+    if path.status == NWPath.Status.satisfied {
+        internetValue = true
+    } else if path.status == NWPath.Status.unsatisfied {
+        internetValue = false
+    } else if path.status == NWPath.Status.requiresConnection {
+        internetValue = true
+    }
+}
+
+let backgroudQueue = DispatchQueue.global(qos: .background)
+
+init() {
+    pathMonitor = NWPathMonitor()
+    pathMonitor.pathUpdateHandler = self.pathUpdateHandler
+    pathMonitor.start(queue: backgroudQueue)
+   }
+
+ func isNetworkAvailable() -> Bool {
+        if let path = self.path {
+           if path.status == NWPath.Status.satisfied {
+            return true
+          }
+        }
+       return false
+   }
+ }
 final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerItemMetadataOutputPushDelegate {
     
     var navigationBar = UINavigationBar()
@@ -30,6 +64,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
     var shuffleColor = textColor
     weak var myDelegate: AVPlayerItemMetadataOutputPushDelegate?
     var metadataOutput = AVPlayerItemMetadataOutput()
+    var networkReachability = NetworkReachability()
     
     //отвечает за номер радиостанции
     var i = 0 {
@@ -56,7 +91,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         backgroundView.frame = CGRect(x: 0, y: 0, width: self.view.bounds.width, height: self.view.bounds.height)
         view.addSubview(backgroundView)
         
@@ -269,6 +304,9 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
             startAnimation()
             inetPlayer.play()
             
+            //проверяем наличие интернета каждые 0.5 сек
+            _ = Timer.scheduledTimer(timeInterval: 0.5, target:self, selector: #selector(checkInternetConnection), userInfo: nil, repeats: true)
+            
             //Надпись "Загружаю..."
             updateTextLabel()
             
@@ -279,6 +317,17 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         }
     }
     
+    //реакция - если пропал или появился интернет
+    @objc private func checkInternetConnection () {
+        switch internetValue {
+        case false where internetNow == true:
+            self.playButton((Any).self)
+        case true where internetNow == false:
+            self.playButton((Any).self)
+        default: break
+        }
+        internetNow = internetValue
+    }
     
     //MARK: - проверка началось ли воспроизведение и замена надписи "Загружаю..."
     private func updateTextLabel () {
