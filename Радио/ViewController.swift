@@ -340,7 +340,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
             metaDataLabel.textColor = textColor
             playOutlet.isEnabled = true
             playOutlet.setImage(imagePause, for: .normal)
-            
+        
         default: break
         }
         
