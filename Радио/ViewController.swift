@@ -33,7 +33,7 @@ final class NetworkReachability {
     }
 }
 
-final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerItemMetadataOutputPushDelegate {
+final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDelegate {
     
     var navigationBar = UINavigationBar()
     var play = true
@@ -59,11 +59,10 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
     var favoriteButton = UIButton()
     var shuffleButton = UIButton()
     var shuffleColor = textColor
-    weak var myDelegate: AVPlayerItemMetadataOutputPushDelegate?
     var metadataOutput = AVPlayerItemMetadataOutput()
     var networkReachability = NetworkReachability()
     var checkInetTimer = Timer()
-    var checkBufferTimer = Timer()
+    var inetPlayer = AVPlayer()
     
     //отвечает за номер радиостанции
     var i = 0 {
@@ -84,19 +83,13 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         }
     }
     
-    var urlRadio: URL?
-    var inetPlayer = AVPlayer()
-    var inetPlayerItem: AVPlayerItem!
-    
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        backgroundView.frame = CGRect(x: 0, y: 0, width: self.view.bounds.width, height: self.view.bounds.height)
-        view.addSubview(backgroundView)
         
-        //MARK: - загружаем данные: последнюю включенную станцию и цветовую тему
+        //загружаем данные: последнюю включенную станцию и цветовую тему
         loadStation()
         loadDataFunc()
+        
         if let temp = saveData[0] as? Int {
             i = temp
         }
@@ -104,119 +97,10 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
             changeThemeValue = temp
         }
         
-        //Делаем навигатор бар прозрачным
-        navigationBar = (navigationController?.navigationBar)!
-        navigationBar.setBackgroundImage(UIImage(), for: .default)
-        navigationBar.shadowImage = UIImage()
-        
-        //MARK: - подключаем свайпы к imageView
-        imageOutlet.isUserInteractionEnabled = true
-        
-        let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(getSwipeAction))
-        swipeLeft.direction = .left
-        imageOutlet.addGestureRecognizer(swipeLeft)
-        
-        let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(getSwipeAction))
-        swipeRight.direction = .right
-        imageOutlet.addGestureRecognizer(swipeRight)
-        let tap = UITapGestureRecognizer(target: self, action: #selector(nextViewFunc))
-        imageOutlet.addGestureRecognizer(tap)
-        
-        
         changeStation(i)
         setupRemoteTransportControls()
         changeTheme(changeThemeValue)
-        
-        //MARK: - располагаем элементы на вью контроллере
-        let size = view.bounds.width - 120
-        imageOutlet.frame = CGRect(x: (view.bounds.width - size) / 2, y: 140, width: size, height: size)
-        imageOutlet.layer.cornerRadius = size / 2
-        imageOutlet.contentMode = .scaleAspectFit
-        imageOutlet.backgroundColor = UIColor(red: 13.0/255.0, green: 30.0/255.0, blue: 45.0/255.0, alpha: 1.0)
-        imageOutlet.clipsToBounds = true
-        imageOutlet.layer.borderWidth = 2
-        imageOutlet.layer.borderColor = UIColor.white.cgColor
-        view.addSubview(imageOutlet)
-        
-        backButtonOutlet.frame = CGRect(x: 70, y: 496, width: 40, height: 44)
-        backButtonOutlet.setImage(UIImage(named: "back.png"), for: .highlighted)
-        backButtonOutlet.addTarget(self, action: #selector(backwardButton), for: .touchUpInside)
-        view.addSubview(backButtonOutlet)
-        
-        nextButtonOutlet.frame = CGRect(x: self.view.bounds.width - 109, y: 496, width: 40, height: 44)
-        nextButtonOutlet.setImage(UIImage(named: "for.png"), for: .highlighted)
-        nextButtonOutlet.addTarget(self, action: #selector(forwardButton), for: .touchUpInside)
-        view.addSubview(nextButtonOutlet)
-        
-        playOutlet.frame = CGRect(x: self.view.bounds.width / 2 - 20, y: 496, width: 40, height: 44)
-        playOutlet.setImage(UIImage(named: "pause1.png"), for: .highlighted)
-        playOutlet.addTarget(self, action: #selector(playButton), for: .touchUpInside)
-        view.addSubview(playOutlet)
-        
-        sleepTimerLabel.frame = CGRect(x: self.view.bounds.width / 2 - 130, y: 35, width: 260, height: 25)
-        sleepTimerLabel.textAlignment = .center
-        sleepTimerLabel.textColor = .systemRed
-        view.addSubview(sleepTimerLabel)
-        
-        metaDataLabel.frame = CGRect(x: self.view.bounds.width / 2 - 100, y: 400, width: 200, height: 60)
-        metaDataLabel.numberOfLines = 2
-        metaDataLabel.textAlignment = .center
-        metaDataLabel.adjustsFontSizeToFitWidth = true
-        view.addSubview(metaDataLabel)
-        
-        volumeMin.frame = CGRect(x: 40, y: 588, width: 22, height: 22)
-        volumeMin.image = UIImage(systemName: "speaker.1.fill")
-        volumeMin.tintColor = UIColor.darkGray
-        view.addSubview(volumeMin)
-        
-        volumeMax.frame = CGRect(x: self.view.bounds.width - 73, y: 586, width: 32, height: 24)
-        volumeMax.image = UIImage(systemName: "speaker.3.fill")
-        volumeMax.tintColor = UIColor.darkGray
-        view.addSubview(volumeMax)
-        
-        titleTextLabel.frame = CGRect(x: self.view.bounds.width / 2 - 115, y: 70, width: 230, height: 40)
-        titleTextLabel.textAlignment = .center
-        titleTextLabel.adjustsFontSizeToFitWidth = true
-        titleTextLabel.font = UIFont.boldSystemFont(ofSize: 30)
-        titleTextLabel.textColor = textColor
-        view.addSubview(titleTextLabel)
-        
-        //Кнопки навигатор контроллера
-        themeButton.frame = CGRect(x: 0, y: 0, width: 27, height: 26)
-        themeButton.setImage(themeImage, for: .normal)
-        themeButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
-        themeButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
-        themeButton.addTarget(self, action: #selector(changeTheme), for: .touchUpInside)
-        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: themeButton)
-        
-        sleepTimerButton.frame = CGRect(x: 0, y: 0, width: 27, height: 26)
-        sleepTimerButton.setImage(UIImage(systemName: "timer"), for: .normal)
-        sleepTimerButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
-        sleepTimerButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
-        sleepTimerButton.addTarget(self, action: #selector(timerButton), for: .touchUpInside)
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: sleepTimerButton)
-        
-        favoriteButton.frame = CGRect(x: 295, y: 365, width: 40, height: 40)
-        favoriteButton.backgroundColor = .systemRed
-        favoriteButton.setImage(UIImage(systemName: "star.fill"), for: .normal)
-        favoriteButton.tintColor = .white
-        favoriteButton.layer.cornerRadius = 20
-        favoriteButton.clipsToBounds = true
-        favoriteButton.addTarget(self, action: #selector(favoriteFunc), for: .touchUpInside)
-        view.addSubview(favoriteButton)
-        
-        shuffleButton.frame = CGRect(x: 45, y: 375, width: 37, height: 25)
-        shuffleButton.setImage(UIImage(systemName: "shuffle"), for: .normal)
-        shuffleButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
-        shuffleButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
-        shuffleButton.tintColor = textColor
-        //пример создания тени к Image, еще код в методе shuffleFunc
-        shuffleButton.layer.shadowOffset = CGSize(width: 0, height: 0)
-        shuffleButton.layer.shadowColor = UIColor.white.cgColor
-        shuffleButton.addTarget(self, action: #selector(shuffleFunc), for: .touchUpInside)
-        view.addSubview(shuffleButton)
-        
-        changeVolume()
+        createViewElements()
         
         //подключаем фоновое воспроизведение
         do {
@@ -224,7 +108,6 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {}
     }
-    
     
     //MARK: - кнопка смена темы
     @objc func changeTheme (_ sender: Any) {
@@ -259,17 +142,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         
         changeThemeValue = !changeThemeValue
     }
-    
-    
-    //MARK: - настройка слайдера громкости
-    private func changeVolume() {
-        let volumeSlider = UIView(frame: CGRect(x: 70, y: 589, width: 230, height: 25))
-        volumeSlider.tintColor = .systemRed
-        self.view.addSubview(volumeSlider)
-        let volumeView = MPVolumeView(frame: volumeSlider.bounds)
-        volumeView.showsRouteButton = false
-        volumeSlider.addSubview(volumeView)
-    }
+
     
     //MARK: - функция смены станций и старта плеера
     private func changeStation (_ value: Int) {
@@ -282,20 +155,19 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         }
         
         checkInetTimer.invalidate()
-        checkBufferTimer.invalidate()
         
         //запоминание последней включенной станции
         saveData[0] = valueTemp
         saveDataFunc()
         titleTextLabel.text = databaseRadio[valueTemp].2
         
-        urlRadio = URL(string: String(databaseRadio[valueTemp].0))
-        inetPlayerItem = AVPlayerItem(asset: AVAsset(url: urlRadio ?? URL(string: "http://www.ru")!))
+        let urlRadio = URL(string: String(databaseRadio[valueTemp].0))
+        let inetPlayerItem = AVPlayerItem(url: urlRadio ?? URL(string: "http://www.ru")!)
         metadataOutput = AVPlayerItemMetadataOutput(identifiers: nil)
-        metadataOutput.setDelegate(self, queue: DispatchQueue.main)
+        metadataOutput.setDelegate(self, queue: .main)
         inetPlayerItem.add(metadataOutput)
         inetPlayer = AVPlayer(playerItem: inetPlayerItem)
-        
+
         if play {
             if let temp = UIImage(named: databaseRadio[valueTemp].1) {
                 titleImage = temp
@@ -306,8 +178,8 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
             inetPlayerItem.preferredForwardBufferDuration = 5
             inetPlayer.play()
             
-            //проверяем наличие интернета каждые 0.5 сек
-            checkInetTimer = Timer.scheduledTimer(timeInterval: 0.5, target:self, selector: #selector(checkInternetConnection), userInfo: nil, repeats: true)
+            //проверяем наличие интернета каждые 1 сек
+            checkInetTimer = Timer.scheduledTimer(timeInterval: 1, target:self, selector: #selector(checkInternetConnection), userInfo: nil, repeats: true)
             
             //Надпись "Загружаю..."
             updateTextLabel()
@@ -321,10 +193,9 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
     
     //реакция - если пропал или появился интернет
     @objc private func checkInternetConnection() {
-        
+    
         switch internetValue {
         case false where internetNow:
-            
             imageOutlet.layer.borderWidth = 6
             imageOutlet.layer.borderColor = UIColor.red.cgColor
             metaDataLabel.textColor = .red
@@ -345,7 +216,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         
         default: break
         }
-        
+
         internetNow = internetValue
     }
     
@@ -354,24 +225,21 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         if inetPlayer.reasonForWaitingToPlay?.rawValue != nil {
             metaDataLabel.text = "Загружаю..."
         } else {
-            if UIImage(named: databaseRadio[i].1) == nil {
-                imageOutlet.startAnimating()
+            if let tempImage = UIImage(named: databaseRadio[i].1) {
+                imageOutlet.image = tempImage
             } else {
-                imageOutlet.image = UIImage(named: databaseRadio[i].1)
+                imageOutlet.startAnimating()
             }
         }
-        
         //передаем в команд-центр надпись "Загружаю..."
         setupNowPlaying(title: titleTextLabel.text!, setImage: titleImage, artist: metaDataLabel.text)
     }
     
     
     //MARK: - Вывод метаданных в команд центре
-    
     //загрузка метадаты
-    internal func metadataOutput(_ output: AVPlayerItemMetadataOutput, didOutputTimedMetadataGroups groups: [AVTimedMetadataGroup], from track: AVPlayerItemTrack?) {
-        let item = groups.first?.items.first
-        if let temp = item?.value(forKeyPath: "value") as? String {
+    internal func metadataOutput (_ output: AVPlayerItemMetadataOutput, didOutputTimedMetadataGroups groups: [AVTimedMetadataGroup], from track: AVPlayerItemTrack?) {
+        if let temp = groups.first?.items.first?.value as? String {
             metaDataLabel.text = temp
         } else {
             metaDataLabel.text = ""
@@ -379,10 +247,9 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         //передаем что играем в команд-центр
         setupNowPlaying(title: titleTextLabel.text!, setImage: titleImage, artist: metaDataLabel.text)
     }
-
     
     //настройка и вывод метаданных в команд-центр
-    private func setupNowPlaying(title: String, setImage: UIImage?, artist: String?){
+    private func setupNowPlaying (title: String, setImage: UIImage?, artist: String?){
         var nowPlayingInfo = [String : Any]()
         nowPlayingInfo[MPMediaItemPropertyTitle] = title
         
@@ -399,7 +266,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
     }
     
     //MARK: - Установка таймера сна
-    @objc func timerButton(_ sender: Any) {
+    @objc func timerButton (_ sender: Any) {
         pickerTimer.datePickerMode = .countDownTimer
         pickerTimer.frame = CGRect(x: 50, y: 40, width: 200, height: 150)
         
@@ -421,7 +288,6 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
     }
 
     @objc func updateTimer () {
-    
         let hour = Int(valueTimer / 3600)
         let min = Int(valueTimer / 60) - hour * 60
         let sec = Int(valueTimer) - hour * 3600 - min * 60
@@ -572,5 +438,119 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         let view2 = ViewController2()
         view2.changeThemeValue = changeThemeValue
         self.navigationController?.pushViewController(view2, animated: true)
+    }
+    
+    //MARK: - располагаем элементы на вью контроллере
+    fileprivate func createViewElements() {
+        
+        //Делаем навигатор бар прозрачным
+        navigationBar = (navigationController?.navigationBar)!
+        navigationBar.setBackgroundImage(UIImage(), for: .default)
+        navigationBar.shadowImage = UIImage()
+        
+        backgroundView.frame = CGRect(x: 0, y: 0, width: self.view.bounds.width, height: self.view.bounds.height)
+        
+        let size = view.bounds.width - 120
+        imageOutlet.frame = CGRect(x: (view.bounds.width - size) / 2, y: 140, width: size, height: size)
+        imageOutlet.layer.cornerRadius = size / 2
+        imageOutlet.contentMode = .scaleAspectFit
+        imageOutlet.backgroundColor = UIColor(red: 13.0/255.0, green: 30.0/255.0, blue: 45.0/255.0, alpha: 1.0)
+        imageOutlet.clipsToBounds = true
+        imageOutlet.layer.borderWidth = 2
+        imageOutlet.layer.borderColor = UIColor.white.cgColor
+        
+        backButtonOutlet.frame = CGRect(x: 70, y: 496, width: 40, height: 44)
+        backButtonOutlet.setImage(UIImage(named: "back.png"), for: .highlighted)
+        backButtonOutlet.addTarget(self, action: #selector(backwardButton), for: .touchUpInside)
+        
+        nextButtonOutlet.frame = CGRect(x: self.view.bounds.width - 109, y: 496, width: 40, height: 44)
+        nextButtonOutlet.setImage(UIImage(named: "for.png"), for: .highlighted)
+        nextButtonOutlet.addTarget(self, action: #selector(forwardButton), for: .touchUpInside)
+        
+        playOutlet.frame = CGRect(x: self.view.bounds.width / 2 - 20, y: 496, width: 40, height: 44)
+        playOutlet.setImage(UIImage(named: "pause1.png"), for: .highlighted)
+        playOutlet.addTarget(self, action: #selector(playButton), for: .touchUpInside)
+        
+        sleepTimerLabel.frame = CGRect(x: self.view.bounds.width / 2 - 130, y: 35, width: 260, height: 25)
+        sleepTimerLabel.textAlignment = .center
+        sleepTimerLabel.textColor = .systemRed
+        
+        metaDataLabel.frame = CGRect(x: self.view.bounds.width / 2 - 100, y: 400, width: 200, height: 60)
+        metaDataLabel.numberOfLines = 2
+        metaDataLabel.textAlignment = .center
+        metaDataLabel.adjustsFontSizeToFitWidth = true
+        
+        volumeMin.frame = CGRect(x: 40, y: 588, width: 22, height: 22)
+        volumeMin.image = UIImage(systemName: "speaker.1.fill")
+        volumeMin.tintColor = UIColor.darkGray
+        
+        volumeMax.frame = CGRect(x: self.view.bounds.width - 73, y: 586, width: 32, height: 24)
+        volumeMax.image = UIImage(systemName: "speaker.3.fill")
+        volumeMax.tintColor = UIColor.darkGray
+        
+        titleTextLabel.frame = CGRect(x: self.view.bounds.width / 2 - 115, y: 70, width: 230, height: 40)
+        titleTextLabel.textAlignment = .center
+        titleTextLabel.adjustsFontSizeToFitWidth = true
+        titleTextLabel.font = UIFont.boldSystemFont(ofSize: 30)
+        titleTextLabel.textColor = textColor
+        
+        //Кнопки навигатор контроллера
+        themeButton.frame = CGRect(x: 0, y: 0, width: 27, height: 26)
+        themeButton.setImage(themeImage, for: .normal)
+        themeButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
+        themeButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
+        themeButton.addTarget(self, action: #selector(changeTheme), for: .touchUpInside)
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: themeButton)
+        
+        sleepTimerButton.frame = CGRect(x: 0, y: 0, width: 27, height: 26)
+        sleepTimerButton.setImage(UIImage(systemName: "timer"), for: .normal)
+        sleepTimerButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
+        sleepTimerButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
+        sleepTimerButton.addTarget(self, action: #selector(timerButton), for: .touchUpInside)
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: sleepTimerButton)
+        
+        favoriteButton.frame = CGRect(x: 295, y: 365, width: 40, height: 40)
+        favoriteButton.backgroundColor = .systemRed
+        favoriteButton.setImage(UIImage(systemName: "star.fill"), for: .normal)
+        favoriteButton.tintColor = .white
+        favoriteButton.layer.cornerRadius = 20
+        favoriteButton.clipsToBounds = true
+        favoriteButton.addTarget(self, action: #selector(favoriteFunc), for: .touchUpInside)
+        
+        shuffleButton.frame = CGRect(x: 45, y: 375, width: 37, height: 25)
+        shuffleButton.setImage(UIImage(systemName: "shuffle"), for: .normal)
+        shuffleButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
+        shuffleButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
+        shuffleButton.tintColor = textColor
+        //пример создания тени к Image, еще код в методе shuffleFunc
+        shuffleButton.layer.shadowOffset = CGSize(width: 0, height: 0)
+        shuffleButton.layer.shadowColor = UIColor.white.cgColor
+        shuffleButton.addTarget(self, action: #selector(shuffleFunc), for: .touchUpInside)
+        
+        let arrayViews = [backgroundView, imageOutlet, backButtonOutlet, nextButtonOutlet, playOutlet, sleepTimerLabel, metaDataLabel, volumeMin, volumeMax, titleTextLabel, favoriteButton, shuffleButton]
+        for views in arrayViews {
+            view.addSubview(views)
+        }
+        let volumeSlider = UIView(frame: CGRect(x: 70, y: 589, width: 230, height: 25))
+        
+        //настройка слайдера громкости
+        volumeSlider.tintColor = .systemRed
+        self.view.addSubview(volumeSlider)
+        let volumeView = MPVolumeView(frame: volumeSlider.bounds)
+        volumeView.showsRouteButton = false
+        volumeSlider.addSubview(volumeView)
+        
+        //MARK: - подключаем свайпы к imageView
+        imageOutlet.isUserInteractionEnabled = true
+        
+        let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(getSwipeAction))
+        swipeLeft.direction = .left
+        imageOutlet.addGestureRecognizer(swipeLeft)
+        
+        let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(getSwipeAction))
+        swipeRight.direction = .right
+        imageOutlet.addGestureRecognizer(swipeRight)
+        let tap = UITapGestureRecognizer(target: self, action: #selector(nextViewFunc))
+        imageOutlet.addGestureRecognizer(tap)
     }
 }
