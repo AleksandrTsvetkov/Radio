@@ -63,6 +63,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
     var metadataOutput = AVPlayerItemMetadataOutput()
     var networkReachability = NetworkReachability()
     var checkInetTimer = Timer()
+    var checkBufferTimer = Timer()
     
     //отвечает за номер радиостанции
     var i = 0 {
@@ -105,7 +106,6 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         
         //Делаем навигатор бар прозрачным
         navigationBar = (navigationController?.navigationBar)!
-        navigationBar.isTranslucent = true
         navigationBar.setBackgroundImage(UIImage(), for: .default)
         navigationBar.shadowImage = UIImage()
         
@@ -233,7 +233,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         } else {
             playOutlet.setImage(UIImage(named: "pause1.png")!, for: .highlighted)
         }
-            
+        
         darkThemeFunc(changeThemeValue)
         saveData[1] = changeThemeValue
         saveDataFunc()
@@ -259,7 +259,8 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         
         changeThemeValue = !changeThemeValue
     }
-
+    
+    
     //MARK: - настройка слайдера громкости
     private func changeVolume() {
         let volumeSlider = UIView(frame: CGRect(x: 70, y: 589, width: 230, height: 25))
@@ -281,6 +282,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         }
         
         checkInetTimer.invalidate()
+        checkBufferTimer.invalidate()
         
         //запоминание последней включенной станции
         saveData[0] = valueTemp
@@ -289,7 +291,6 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
         
         urlRadio = URL(string: String(databaseRadio[valueTemp].0))
         inetPlayerItem = AVPlayerItem(asset: AVAsset(url: urlRadio ?? URL(string: "http://www.ru")!))
-        
         metadataOutput = AVPlayerItemMetadataOutput(identifiers: nil)
         metadataOutput.setDelegate(self, queue: DispatchQueue.main)
         inetPlayerItem.add(metadataOutput)
@@ -302,6 +303,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
                 titleImage = UIImage(named: "default")!
             }
             startAnimation()
+            inetPlayerItem.preferredForwardBufferDuration = 5
             inetPlayer.play()
             
             //проверяем наличие интернета каждые 0.5 сек
@@ -318,10 +320,10 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
     }
     
     //реакция - если пропал или появился интернет
-    @objc private func checkInternetConnection () {
+    @objc private func checkInternetConnection() {
         
         switch internetValue {
-        case false where internetNow == true:
+        case false where internetNow:
             
             imageOutlet.layer.borderWidth = 6
             imageOutlet.layer.borderColor = UIColor.red.cgColor
@@ -333,7 +335,7 @@ final class ViewController: UIViewController, AVAudioPlayerDelegate, AVPlayerIte
             //передаем эту запись в команд центр
             setupNowPlaying(title: titleTextLabel.text!, setImage: titleImage, artist: metaDataLabel.text)
             
-        case true where internetNow == false:
+        case true where !internetNow:
             changeStation(i)
             imageOutlet.layer.borderWidth = 2
             imageOutlet.layer.borderColor = UIColor.white.cgColor

@@ -101,7 +101,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var navViewController = UINavigationController()
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-                
+        
         //создаем Navigation Controller
         let view1 = ViewController()
         navViewController = UINavigationController(rootViewController: view1)
