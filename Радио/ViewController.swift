@@ -63,6 +63,9 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     var networkReachability = NetworkReachability()
     var checkInetTimer = Timer()
     var inetPlayer = AVPlayer()
+    var volumeTimer = Timer()
+    var volumeValue: Float = 0
+    var playback = false
     
     //отвечает за номер радиостанции
     var i = 0 {
@@ -106,7 +109,45 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
+            
+            //следим за ошибками аудиосессии
+            NotificationCenter.default.addObserver(self, selector: #selector(handleInterruption), name: AVAudioSession.interruptionNotification, object: nil)
         } catch {}
+    }
+    
+    //ставим pause при звонке и play по окончанию звонка
+    @objc func handleInterruption (notification: Notification) {
+        guard let userInfo = notification.userInfo,
+            let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+            let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+                return
+        }
+        if type == .began { // при звонке .began срабатывает всегда
+            inetPlayer.pause()
+        } else if type == .ended { // а вот когда звонок заканчивается, .ended не срабатывает
+            if let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt {
+                let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+                if options.contains(.shouldResume) {
+                    // Ошибок больше нет, можно включать play
+                    volumeValue = 0
+                    inetPlayer.play()
+                    //плавная громкость
+                    volumeTimer = Timer.scheduledTimer(timeInterval: 0.03, target: self, selector: #selector(volumeUp), userInfo: nil, repeats: true)
+                }
+            }
+        }
+    }
+
+    //плавная громкость
+    @objc func volumeUp () {
+        if volumeValue <= 1.0 {
+            inetPlayer.volume = volumeValue
+            volumeValue += 0.01
+            volumeValue = volumeValue * 1.2
+        } else {
+            inetPlayer.volume = 1.0
+            volumeTimer.invalidate()
+        }
     }
     
     //MARK: - кнопка смена темы
@@ -155,6 +196,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         }
         
         checkInetTimer.invalidate()
+        playback = false
         
         //запоминание последней включенной станции
         saveData[0] = valueTemp
@@ -177,6 +219,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
             startAnimation()
             inetPlayerItem.preferredForwardBufferDuration = 5
             inetPlayer.play()
+            inetPlayer.volume = 0
             
             //проверяем наличие интернета каждые 1 сек
             checkInetTimer = Timer.scheduledTimer(timeInterval: 1, target:self, selector: #selector(checkInternetConnection), userInfo: nil, repeats: true)
@@ -188,6 +231,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
             inetPlayer.pause()
             metaDataLabel.text = ""
             stopAnimation()
+            playback = false
         }
     }
     
@@ -244,6 +288,13 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         } else {
             metaDataLabel.text = ""
         }
+        
+        if !playback {
+            volumeValue = 0
+            volumeTimer = Timer.scheduledTimer(timeInterval: 0.02, target: self, selector: #selector(volumeUp), userInfo: nil, repeats: true)
+            playback = true
+        }
+        
         //передаем что играем в команд-центр
         setupNowPlaying(title: titleTextLabel.text!, setImage: titleImage, artist: metaDataLabel.text)
     }
