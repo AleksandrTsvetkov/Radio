@@ -264,7 +264,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         internetNow = internetValue
     }
     
-    //MARK: - проверка началось ли воспроизведение и замена надписи "Загружаю..."
+    //MARK: - надпись "Загружаю..."  пока не началось воспроизведение
     private func updateTextLabel () {
         if inetPlayer.reasonForWaitingToPlay?.rawValue != nil {
             metaDataLabel.text = "Загружаю..."
@@ -289,6 +289,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
             metaDataLabel.text = ""
         }
         
+        //плавная громкость при включении станции
         if !playback {
             volumeValue = 0
             volumeTimer = Timer.scheduledTimer(timeInterval: 0.02, target: self, selector: #selector(volumeUp), userInfo: nil, repeats: true)
@@ -373,14 +374,12 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         if play {
             playOutlet.setImage(UIImage(named: "play1.png")!, for: .highlighted)
             playOutlet.setImage(imagePlay, for: .normal)
-            play = !play
-            changeStation(i)
         } else {
             playOutlet.setImage(UIImage(named: "pause1.png")!, for: .highlighted)
             playOutlet.setImage(imagePause, for: .normal)
-            play = !play
-            changeStation(i)
         }
+        play = !play
+        changeStation(i)
     }
     
     @objc func forwardButton (_ sender: Any) {
@@ -501,8 +500,8 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         
         backgroundView.frame = CGRect(x: 0, y: 0, width: self.view.bounds.width, height: self.view.bounds.height)
         
-        let size = view.bounds.width - 120
-        imageOutlet.frame = CGRect(x: (view.bounds.width - size) / 2, y: 140, width: size, height: size)
+        let size = view.bounds.width * 0.68
+        imageOutlet.frame = CGRect(x: (view.bounds.width - size) / 2, y: view.bounds.height * 0.187, width: size, height: size)
         imageOutlet.layer.cornerRadius = size / 2
         imageOutlet.contentMode = .scaleAspectFit
         imageOutlet.backgroundColor = UIColor(red: 13.0/255.0, green: 30.0/255.0, blue: 45.0/255.0, alpha: 1.0)
@@ -510,36 +509,36 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         imageOutlet.layer.borderWidth = 2
         imageOutlet.layer.borderColor = UIColor.white.cgColor
         
-        backButtonOutlet.frame = CGRect(x: 70, y: 496, width: 40, height: 44)
+        backButtonOutlet.frame = CGRect(x: view.bounds.width * 0.187, y: view.bounds.height * 0.745, width: 40, height: 44)
         backButtonOutlet.setImage(UIImage(named: "back.png"), for: .highlighted)
         backButtonOutlet.addTarget(self, action: #selector(backwardButton), for: .touchUpInside)
         
-        nextButtonOutlet.frame = CGRect(x: self.view.bounds.width - 109, y: 496, width: 40, height: 44)
+        nextButtonOutlet.frame = CGRect(x: view.bounds.width * 0.709, y: view.bounds.height * 0.745, width: 40, height: 44)
         nextButtonOutlet.setImage(UIImage(named: "for.png"), for: .highlighted)
         nextButtonOutlet.addTarget(self, action: #selector(forwardButton), for: .touchUpInside)
         
-        playOutlet.frame = CGRect(x: self.view.bounds.width / 2 - 20, y: 496, width: 40, height: 44)
+        playOutlet.frame = CGRect(x: view.bounds.width / 2 - 20, y: view.bounds.height * 0.745, width: 40, height: 44)
         playOutlet.setImage(UIImage(named: "pause1.png"), for: .highlighted)
         playOutlet.addTarget(self, action: #selector(playButton), for: .touchUpInside)
         
-        sleepTimerLabel.frame = CGRect(x: self.view.bounds.width / 2 - 130, y: 35, width: 260, height: 25)
+        sleepTimerLabel.frame = CGRect(x: view.bounds.width / 2 - 130, y: view.bounds.height * 0.055, width: 260, height: 25)
         sleepTimerLabel.textAlignment = .center
         sleepTimerLabel.textColor = .systemRed
         
-        metaDataLabel.frame = CGRect(x: self.view.bounds.width / 2 - 100, y: 400, width: 200, height: 60)
+        metaDataLabel.frame = CGRect(x: view.bounds.width / 2 - 100, y: view.bounds.height * 0.6, width: 200, height: 60)
         metaDataLabel.numberOfLines = 2
         metaDataLabel.textAlignment = .center
         metaDataLabel.adjustsFontSizeToFitWidth = true
         
-        volumeMin.frame = CGRect(x: 40, y: 588, width: 22, height: 22)
+        volumeMin.frame = CGRect(x: view.bounds.width * 0.11, y: view.bounds.height * 0.88, width: 22, height: 22)
         volumeMin.image = UIImage(systemName: "speaker.1.fill")
         volumeMin.tintColor = UIColor.darkGray
         
-        volumeMax.frame = CGRect(x: self.view.bounds.width - 73, y: 586, width: 32, height: 24)
+        volumeMax.frame = CGRect(x: view.bounds.width * 0.805, y:  view.bounds.height * 0.878, width: 32, height: 24)
         volumeMax.image = UIImage(systemName: "speaker.3.fill")
         volumeMax.tintColor = UIColor.darkGray
         
-        titleTextLabel.frame = CGRect(x: self.view.bounds.width / 2 - 115, y: 70, width: 230, height: 40)
+        titleTextLabel.frame = CGRect(x: view.bounds.width / 2 - 115, y: view.bounds.height * 0.1, width: 230, height: 40)
         titleTextLabel.textAlignment = .center
         titleTextLabel.adjustsFontSizeToFitWidth = true
         titleTextLabel.font = UIFont.boldSystemFont(ofSize: 30)
@@ -560,7 +559,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         sleepTimerButton.addTarget(self, action: #selector(timerButton), for: .touchUpInside)
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: sleepTimerButton)
         
-        favoriteButton.frame = CGRect(x: 295, y: 365, width: 40, height: 40)
+        favoriteButton.frame = CGRect(x: view.bounds.width * 0.77, y: view.bounds.height * 0.53, width: 40, height: 40)
         favoriteButton.backgroundColor = .systemRed
         favoriteButton.setImage(UIImage(systemName: "star.fill"), for: .normal)
         favoriteButton.tintColor = .white
@@ -568,11 +567,12 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         favoriteButton.clipsToBounds = true
         favoriteButton.addTarget(self, action: #selector(favoriteFunc), for: .touchUpInside)
         
-        shuffleButton.frame = CGRect(x: 45, y: 375, width: 37, height: 25)
+        shuffleButton.frame = CGRect(x: view.bounds.width * 0.124, y: view.bounds.height * 0.54, width: 37, height: 25)
         shuffleButton.setImage(UIImage(systemName: "shuffle"), for: .normal)
         shuffleButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
         shuffleButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
         shuffleButton.tintColor = textColor
+        
         //пример создания тени к Image, еще код в методе shuffleFunc
         shuffleButton.layer.shadowOffset = CGSize(width: 0, height: 0)
         shuffleButton.layer.shadowColor = UIColor.white.cgColor
@@ -582,7 +582,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         for views in arrayViews {
             view.addSubview(views)
         }
-        let volumeSlider = UIView(frame: CGRect(x: 70, y: 589, width: 230, height: 25))
+        let volumeSlider = UIView(frame: CGRect(x: view.bounds.width * 0.187, y: view.bounds.height * 0.8829, width: view.bounds.width * 0.6, height: 25))
         
         //настройка слайдера громкости
         volumeSlider.tintColor = .systemRed

@@ -47,6 +47,4 @@ class Data: UIViewController {
     static let size = CGSize(width: 500, height: 500)
     
     static let imageArray = [UIImage(named:"00a")!, UIImage(named:"01a")!, UIImage(named:"02a")!, UIImage(named:"03a")!, UIImage(named:"04a")!, UIImage(named:"05a")!, UIImage(named:"06a")!, UIImage(named:"07a")!, UIImage(named:"08a")!, UIImage(named:"09a")!, UIImage(named:"10a")!, UIImage(named:"11a")!, UIImage(named:"12a")!, UIImage(named:"13a")!, UIImage(named:"14a")!, UIImage(named:"15a")!, UIImage(named:"16a")!, UIImage(named:"17a")!, UIImage(named:"18a")!, UIImage(named:"19a")!]
-
-    
 }
