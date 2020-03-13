@@ -110,6 +110,9 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         if let temp = saveData[2] as? Bool {
             repeatValue = temp
         }
+        if let temp = saveData[3] as? Bool {
+            shuffle = temp
+        }
         
         changeStation(i)
         setupRemoteTransportControls()
@@ -119,6 +122,10 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         if repeatValue {
             repeatValue = !repeatValue
             repeatFunc()
+        }
+        if shuffle {
+            shuffle = !shuffle
+            shuffleFunc()
         }
         
         //подключаем фоновое воспроизведение
@@ -136,6 +143,9 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
             if let temp = UserDefaults.standard.array(forKey: "fromViewTable") {
                 fromViewTable = temp
                 if let temp = fromViewTable[0] as? Int {
+                    if temp > 5 && repeatValue {
+                        repeatFunc()
+                    }
                     if temp != i {
                         i = temp
                         changeStation(i)
@@ -522,6 +532,8 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
             shuffleButton.layer.shadowOpacity = 0
             shuffleButton.layer.shadowRadius = 0
         }
+        saveData[3] = shuffle
+        saveDataFunc()
         shuffleButton.tintColor = shuffleColor
     }
     

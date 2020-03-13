@@ -26,11 +26,12 @@ func loadDataFunc () {
     if let loadUser = UserDefaults.standard.array(forKey: "start") {
         saveData = loadUser
     }
-    if saveData.count < 3 {
+    if saveData.count < 4 {
         saveData.removeAll()
-        saveData.append(0)
-        saveData.append(false)
-        saveData.append(false)
+        saveData.append(0)      //i - номер станции
+        saveData.append(false)  //темная тема
+        saveData.append(false)  //repeatValue
+        saveData.append(false)  //shuffle
     }
 }
 
