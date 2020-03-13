@@ -39,6 +39,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     var play = true
     var changeThemeValue = true
     var shuffle = false
+    var repeatValue = false
     let pickerTimer = UIDatePicker()
     let sleepTimerLabel = UILabel()
     let metaDataLabel = UILabel()
@@ -58,7 +59,9 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     var titleTextLabel = UILabel()
     var favoriteButton = UIButton()
     var shuffleButton = UIButton()
+    var repeatButton = UIButton()
     var shuffleColor = textColor
+    var repeatColor = textColor
     var metadataOutput = AVPlayerItemMetadataOutput()
     var networkReachability = NetworkReachability()
     var checkInetTimer = Timer()
@@ -76,12 +79,17 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
                     temp = Int.random(in: 0..<databaseRadio.count)
                 }
                 i = temp
-            } else {
+            } else if repeatValue {
                 switch i {
-                case databaseRadio.count: i = 0
-                case -1: i = databaseRadio.count - 1
+                case 6: i = 0
+                case -1: i = 5
                 default: break
                 }
+            }
+            switch i {
+            case databaseRadio.count: i = 0
+            case -1: i = databaseRadio.count - 1
+            default: break
             }
         }
     }
@@ -99,11 +107,19 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         if let temp = saveData[1] as? Bool {
             changeThemeValue = temp
         }
+        if let temp = saveData[2] as? Bool {
+            repeatValue = temp
+        }
         
         changeStation(i)
         setupRemoteTransportControls()
         changeTheme(changeThemeValue)
         createViewElements()
+        
+        if repeatValue {
+            repeatValue = !repeatValue
+            repeatFunc()
+        }
         
         //подключаем фоновое воспроизведение
         do {
@@ -113,6 +129,21 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
             //следим за ошибками аудиосессии
             NotificationCenter.default.addObserver(self, selector: #selector(handleInterruption), name: AVAudioSession.interruptionNotification, object: nil)
         } catch {}
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        if tableViewFlag {
+            if let temp = UserDefaults.standard.array(forKey: "fromViewTable") {
+                fromViewTable = temp
+                if let temp = fromViewTable[0] as? Int {
+                    if temp != i {
+                        i = temp
+                        changeStation(i)
+                    }
+            }
+            }
+        }
+        tableViewFlag = !tableViewFlag
     }
     
     //ставим pause при звонке и play по окончанию звонка
@@ -168,11 +199,19 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         backButtonOutlet.setImage(imageBack, for: .normal)
         nextButtonOutlet.setImage(imageNext, for: .normal)
         themeButton.setImage(themeImage, for: .normal)
+        sleepTimerButton.tintColor = textColor
+        themeButton.tintColor = textColor
         
         if shuffle {
             shuffleButton.tintColor = .systemRed
         } else {
             shuffleButton.tintColor = textColor
+        }
+        
+        if repeatValue {
+            repeatButton.tintColor = .systemRed
+        } else {
+            repeatButton.tintColor = textColor
         }
         
         if play {
@@ -470,6 +509,9 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     
     //включаем/отключаем shuffle
     @objc func shuffleFunc () {
+        if repeatValue {
+            repeatFunc()
+        }
         shuffle = !shuffle
         if shuffle {
             shuffleColor = .systemRed
@@ -482,11 +524,36 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         }
         shuffleButton.tintColor = shuffleColor
     }
+    
+    //включаем/отключаем repeat
+    @objc func repeatFunc () {
+        if shuffle {
+            shuffleFunc()
+        }
+        repeatValue = !repeatValue
+        if repeatValue {
+            repeatColor = .systemRed
+            repeatButton.layer.shadowOpacity = 1.0
+            repeatButton.layer.shadowRadius = 10
+        } else {
+            repeatColor = textColor
+            repeatButton.layer.shadowOpacity = 0
+            repeatButton.layer.shadowRadius = 0
+        }
+        if i >= 6 {
+            i = 0
+            changeStation(i)
+        }
+        saveData[2] = repeatValue
+        saveDataFunc()
+        repeatButton.tintColor = repeatColor
+    }
 
     //переход на следующий view
     @objc func nextViewFunc (_ sender: Any) {
         let view2 = ViewController2()
         view2.changeThemeValue = changeThemeValue
+        view2.currentStation = i
         self.navigationController?.pushViewController(view2, animated: true)
     }
     
@@ -544,21 +611,6 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         titleTextLabel.font = UIFont.boldSystemFont(ofSize: 30)
         titleTextLabel.textColor = textColor
         
-        //Кнопки навигатор контроллера
-        themeButton.frame = CGRect(x: 0, y: 0, width: 27, height: 26)
-        themeButton.setImage(themeImage, for: .normal)
-        themeButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
-        themeButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
-        themeButton.addTarget(self, action: #selector(changeTheme), for: .touchUpInside)
-        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: themeButton)
-        
-        sleepTimerButton.frame = CGRect(x: 0, y: 0, width: 27, height: 26)
-        sleepTimerButton.setImage(UIImage(systemName: "timer"), for: .normal)
-        sleepTimerButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
-        sleepTimerButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
-        sleepTimerButton.addTarget(self, action: #selector(timerButton), for: .touchUpInside)
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: sleepTimerButton)
-        
         favoriteButton.frame = CGRect(x: view.bounds.width * 0.77, y: view.bounds.height * 0.53, width: 40, height: 40)
         favoriteButton.backgroundColor = .systemRed
         favoriteButton.setImage(UIImage(systemName: "star.fill"), for: .normal)
@@ -567,18 +619,49 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         favoriteButton.clipsToBounds = true
         favoriteButton.addTarget(self, action: #selector(favoriteFunc), for: .touchUpInside)
         
-        shuffleButton.frame = CGRect(x: view.bounds.width * 0.124, y: view.bounds.height * 0.54, width: 37, height: 25)
+        //Кнопки навигатор контроллера
+        themeButton.frame = CGRect(x: 0, y: 0, width: 27, height: 26)
+        themeButton.setImage(themeImage, for: .normal)
+        themeButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
+        themeButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
+        themeButton.addTarget(self, action: #selector(changeTheme), for: .touchUpInside)
+        let item1 = UIBarButtonItem(customView: themeButton)
+        
+        sleepTimerButton.frame = CGRect(x: 0, y: 0, width: 26, height: 25)
+        sleepTimerButton.setImage(UIImage(systemName: "timer"), for: .normal)
+        sleepTimerButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
+        sleepTimerButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
+        sleepTimerButton.addTarget(self, action: #selector(timerButton), for: .touchUpInside)
+        let item2 = UIBarButtonItem(customView: sleepTimerButton)
+        
+        shuffleButton.frame = CGRect(x: 0, y: 0, width: 30, height: 0)
         shuffleButton.setImage(UIImage(systemName: "shuffle"), for: .normal)
         shuffleButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
         shuffleButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
         shuffleButton.tintColor = textColor
+        let item3 = UIBarButtonItem(customView: shuffleButton)
         
         //пример создания тени к Image, еще код в методе shuffleFunc
         shuffleButton.layer.shadowOffset = CGSize(width: 0, height: 0)
         shuffleButton.layer.shadowColor = UIColor.white.cgColor
         shuffleButton.addTarget(self, action: #selector(shuffleFunc), for: .touchUpInside)
         
-        let arrayViews = [backgroundView, imageOutlet, backButtonOutlet, nextButtonOutlet, playOutlet, sleepTimerLabel, metaDataLabel, volumeMin, volumeMax, titleTextLabel, favoriteButton, shuffleButton]
+        repeatButton.frame = CGRect(x: 0, y: 0, width: 30, height: 0)
+        repeatButton.setImage(UIImage(systemName: "repeat"), for: .normal)
+        repeatButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
+        repeatButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
+        repeatButton.tintColor = textColor
+        let item4 = UIBarButtonItem(customView: repeatButton)
+        
+        navigationItem.leftBarButtonItems = [item1, item2]
+        navigationItem.rightBarButtonItems = [item3, item4]
+        
+        //пример создания тени к Image, еще код в методе shuffleFunc
+        repeatButton.layer.shadowOffset = CGSize(width: 0, height: 0)
+        repeatButton.layer.shadowColor = UIColor.white.cgColor
+        repeatButton.addTarget(self, action: #selector(repeatFunc), for: .touchUpInside)
+        
+        let arrayViews = [backgroundView, imageOutlet, backButtonOutlet, nextButtonOutlet, playOutlet, sleepTimerLabel, metaDataLabel, volumeMin, volumeMax, titleTextLabel, favoriteButton, shuffleButton, repeatButton]
         for views in arrayViews {
             view.addSubview(views)
         }

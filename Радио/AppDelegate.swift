@@ -2,6 +2,7 @@ import UIKit
 
 public var databaseRadio: [(String, String, String)] = []
 public var saveDataRadio: [String] = []
+public var fromViewTable: [Any] = []
 public var saveData : [Any] = []
 public var textColor = UIColor()
 public var imageBack = UIImage()
@@ -12,6 +13,7 @@ public var themeImage = UIImage()
 public var backgroundImage = UIImage()
 public var internetValue = true
 public var internetNow = true
+public var tableViewFlag = false
 
 //сохранение данных
 func saveDataFunc () {
@@ -24,12 +26,21 @@ func loadDataFunc () {
     if let loadUser = UserDefaults.standard.array(forKey: "start") {
         saveData = loadUser
     }
-    if saveData.count < 2 {
+    if saveData.count < 3 {
         saveData.removeAll()
         saveData.append(0)
         saveData.append(false)
+        saveData.append(false)
     }
 }
+
+//сохранение данных для перехода на View2
+func saveViewTable (value: Int) {
+    fromViewTable.removeAll()
+    fromViewTable.append(value)
+    UserDefaults.standard.set(fromViewTable, forKey: "fromViewTable")
+}
+
 
 //сохранение базы станций
 func saveStation () {
