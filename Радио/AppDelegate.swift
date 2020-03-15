@@ -14,6 +14,7 @@ public var backgroundImage = UIImage()
 public var internetValue = true
 public var internetNow = true
 public var tableViewFlag = false
+public var changeDataBaseRadio = false
 
 //сохранение данных
 func saveDataFunc () {
@@ -65,20 +66,20 @@ func loadStation () {
     if tempBase.count == 0 {
         databaseRadio = Data.baseRadio
     }
-        for n in 0..<(tempBase.count / 3) {
-            if n == databaseRadio.count {
-                databaseRadio.append(("", "", ""))
-            }
-            if let temp = tempBase[3 * n] as? String {
-                databaseRadio[n].0  = temp
-            }
-            if let temp = tempBase[1 + 3 * n] as? String {
-                databaseRadio[n].1  = temp
-            }
-            if let temp = tempBase[2 + 3 * n] as? String {
-                databaseRadio[n].2  = temp
-            }
+    for n in 0..<(tempBase.count / 3) {
+        if n == databaseRadio.count {
+            databaseRadio.append(("", "", ""))
         }
+        if let temp = tempBase[3 * n] as? String {
+            databaseRadio[n].0  = temp
+        }
+        if let temp = tempBase[1 + 3 * n] as? String {
+            databaseRadio[n].1  = temp
+        }
+        if let temp = tempBase[2 + 3 * n] as? String {
+            databaseRadio[n].2  = temp
+        }
+    }
 }
 
 //  Код для цвета текста в статус баре не работает без добавления строчки в plist.info.
@@ -115,8 +116,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
         //создаем Navigation Controller
-        let view1 = ViewController()
-        navViewController = UINavigationController(rootViewController: view1)
+        navViewController = UINavigationController(rootViewController: ViewController())
         
         //цвет кнопок в навигатор баре по умолчанию
         UINavigationBar.appearance().tintColor = .white

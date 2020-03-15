@@ -91,14 +91,18 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
             case -1: i = databaseRadio.count - 1
             default: break
             }
+            //запоминание последней включенной станции
+            saveData[0] = i
+            saveDataFunc()
         }
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        //загружаем данные: последнюю включенную станцию и цветовую тему
+        //загружаем данные: последнюю включенную станцию
         loadStation()
+        //згаружаем последние настройки приложения
         loadDataFunc()
         
         if let temp = saveData[0] as? Int {
@@ -139,6 +143,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     }
     
     override func viewDidAppear(_ animated: Bool) {
+        loadStation()
         if tableViewFlag {
             if let temp = UserDefaults.standard.array(forKey: "fromViewTable") {
                 fromViewTable = temp
@@ -146,9 +151,14 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
                     if temp > 5 && repeatValue {
                         repeatFunc()
                     }
-                    if temp != i {
+//                    print("старое занчение - ", i)
+//                    print("Новое занчение - ", temp)
+                    if temp != i && !changeDataBaseRadio {
                         i = temp
                         changeStation(i)
+                    }
+                    if temp != i && changeDataBaseRadio {
+                        i = temp
                     }
             }
             }
@@ -247,9 +257,6 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         checkInetTimer.invalidate()
         playback = false
         
-        //запоминание последней включенной станции
-        saveData[0] = valueTemp
-        saveDataFunc()
         titleTextLabel.text = databaseRadio[valueTemp].2
         
         let urlRadio = URL(string: String(databaseRadio[valueTemp].0))
@@ -260,13 +267,9 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         inetPlayer = AVPlayer(playerItem: inetPlayerItem)
 
         if play {
-            if let temp = UIImage(named: databaseRadio[valueTemp].1) {
-                titleImage = temp
-            } else {
-                titleImage = UIImage(named: "default")!
-            }
+            //titleImage = UIImage(named: databaseRadio[valueTemp].1) ?? UIImage(named: "default")!
             startAnimation()
-            inetPlayerItem.preferredForwardBufferDuration = 5
+            inetPlayerItem.preferredForwardBufferDuration = 10
             inetPlayer.play()
             inetPlayer.volume = 0
             
@@ -563,10 +566,12 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
 
     //переход на следующий view
     @objc func nextViewFunc (_ sender: Any) {
-        let view2 = ViewController2()
-        view2.changeThemeValue = changeThemeValue
-        view2.currentStation = i
-        self.navigationController?.pushViewController(view2, animated: true)
+        //настройки для правильного отображения CollectionViewController
+        let flowLayout = UICollectionViewFlowLayout()
+        let myCollectionViewController = MyCollectionViewController(collectionViewLayout: flowLayout)
+        myCollectionViewController.changeThemeValue = changeThemeValue
+        myCollectionViewController.currentStation = i
+        self.navigationController?.pushViewController(myCollectionViewController, animated: true)
     }
     
     //MARK: - располагаем элементы на вью контроллере
