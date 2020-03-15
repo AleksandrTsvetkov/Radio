@@ -35,8 +35,6 @@ final class ViewController2: UIViewController {
         let item2 = UIBarButtonItem(customView: editButton)
         navigationItem.rightBarButtonItems = [item2, item1]
         
-//        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Назад", style: .done, target: self, action: #selector(exit))
-        
         //располагаем элементы на View
         stationTable = UITableView(frame: CGRect(x: 0, y: 150, width: view.bounds.width, height: view.bounds.height - 150), style: .plain)
         stationTable.register(UITableViewCell.self, forCellReuseIdentifier: identifier)
@@ -56,7 +54,6 @@ final class ViewController2: UIViewController {
         view.addSubview(titleText)
         
         saveViewTable(value: currentStation)
-        
     }
     
     //добавить станцию
@@ -91,11 +88,6 @@ final class ViewController2: UIViewController {
     @objc func editTable() {
         stationTable.isEditing = !stationTable.isEditing
     }
-    
-//    //назад
-//    @objc func exit () {
-//        self.navigationController?.popViewController(animated: true)
-//    }
 }
 
 extension ViewController2: UITableViewDataSource, UITableViewDelegate {
@@ -112,12 +104,14 @@ extension ViewController2: UITableViewDataSource, UITableViewDelegate {
     //заполняем таблицу данными из массива станций
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: identifier, for: indexPath)
+        let image = UIImage(named: databaseRadio[indexPath.row].1) ?? UIImage(named: "default")
         let value = databaseRadio[indexPath.row].2
         if indexPath.row < 6 {
             cell.backgroundColor = UIColor(red: 1, green: 1, blue: 0, alpha: 0.1)
         } else {
             cell.backgroundColor = .clear
         }
+        cell.imageView?.image = image
         cell.textLabel?.text = value
         return cell
     }
