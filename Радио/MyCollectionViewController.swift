@@ -7,12 +7,14 @@
 //
 import UIKit
 
-final class MyCollectionViewController: UICollectionViewController, UICollectionViewDelegateFlowLayout {
+class MyCollectionViewController: UICollectionViewController, UICollectionViewDelegateFlowLayout, UIGestureRecognizerDelegate {
     
     var backgroundImage = UIImageView()
     var changeThemeValue = Bool()
+    var backColor = UIColor()
     var currentStation = Int()
     var addButton = UIButton()
+    var textLabel = UILabel()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -22,10 +24,32 @@ final class MyCollectionViewController: UICollectionViewController, UICollection
         
         if changeThemeValue {
             backgroundImage.image = UIImage(named: "white")
+            backColor = UIColor(red: 193/255, green: 205/255, blue: 247/255, alpha: 1.0)
         } else {
             backgroundImage.image = UIImage(named: "black1")
+            backColor = UIColor(red: 12/255, green: 30/255, blue: 44/255, alpha: 1.0)
         }
+        
+        let view1 = UIViewController()
+        addChild(view1)
+        view1.view.frame = CGRect(x: 0, y: 0, width: view.frame.size.width, height: 120)
+        view1.view.backgroundColor = backColor
+        view.addSubview(view1.view)
+        
+        textLabel.frame = CGRect(x: 10, y: 70, width: 250, height: 50)
+        textLabel.text = "Радиостанции"
+        textLabel.textColor = textColor
+        textLabel.font = UIFont.boldSystemFont(ofSize: 32)
+        view1.view.addSubview(textLabel)
+        
         collectionView?.backgroundView = backgroundImage
+        collectionView?.frame = CGRect(x: 0, y: 120, width: view.frame.size.width, height: view.frame.size.height-120)
+        //расстояния между ячейками и от краев экрана
+        let layout = UICollectionViewFlowLayout()
+        layout.sectionInset = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: 5)
+        layout.minimumInteritemSpacing = 5
+        layout.minimumLineSpacing = 5
+        collectionView!.collectionViewLayout = layout
         
         //кнопки в навигатор баре
         addButton.setImage(UIImage(systemName: "plus"), for: .normal)
@@ -39,6 +63,25 @@ final class MyCollectionViewController: UICollectionViewController, UICollection
         collectionView.dragDelegate = self
         
         saveViewTable(value: currentStation)
+        
+        //подключаем долгий тап
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress))
+        longPress.minimumPressDuration = 0.5
+        longPress.delegate = self
+        collectionView?.addGestureRecognizer(longPress)
+    }
+    
+    //долгий тап на ячейке
+    @objc func handleLongPress (gesture : UILongPressGestureRecognizer!) {
+        if gesture.state != .began {
+            return
+        }
+        let p = gesture.location(in: self.collectionView)
+        if let indexPath = self.collectionView.indexPathForItem(at: p) {
+            if databaseRadio.count > 1 {
+                deleteFunc(indexPath)
+            }
+        }
     }
     
     //Добавление станции
@@ -68,6 +111,24 @@ final class MyCollectionViewController: UICollectionViewController, UICollection
         self.present(alertController, animated: true, completion: nil)
     }
 
+    //удаление станции
+    private func deleteFunc (_ indexPath: IndexPath) {
+        let alertController = UIAlertController(title: "Удалить станцию?\n", message: databaseRadio[indexPath.row].2, preferredStyle: UIAlertController.Style.alert)
+        let saveAction = UIAlertAction(title: "Да", style: UIAlertAction.Style.default, handler: { alert -> Void in
+            
+            databaseRadio.remove(at: indexPath.row)
+            self.collectionView.deleteItems(at: [indexPath])
+            self.collectionView.reloadData()
+            saveStation()
+           })
+        let cancelAction = UIAlertAction(title: "нет", style: UIAlertAction.Style.default, handler: {
+               (action : UIAlertAction!) -> Void in })
+        
+        alertController.addAction(cancelAction)
+        alertController.addAction(saveAction)
+        self.present(alertController, animated: true, completion: nil)
+    }
+
     
     //количество ячеек
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -80,26 +141,19 @@ final class MyCollectionViewController: UICollectionViewController, UICollection
         let value = databaseRadio[indexPath.row].2
         cell.imageView.image = image
         cell.nameLabel.text = value
+        
         return cell
     }
     //размер ячеек
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let heightCell = (self.view.frame.size.width - 44.0) / 3.0
+        let heightCell = (self.view.frame.size.width - 20.0) / 3.0
         return CGSize(width: heightCell, height: heightCell + 20)
     }
     //срабатывает при выборе ячейки
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        changeDataBaseRadio = false
         saveViewTable(value: indexPath.row)
         self.navigationController?.popViewController(animated: true)
     }
-    
-    //расстояния от боков экрана
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        return UIEdgeInsets(top: 10.0, left: 10.0, bottom: 10.0, right: 10.0)
-    }
-    
-
 }
 
 //MARK: - класс ячейки
@@ -126,7 +180,7 @@ final class myViewCell: UICollectionViewCell {
     
     private func setupView() {
         backgroundColor = .white
-        let heightCell = (UIScreen.main.bounds.width - 44.0) / 3.0
+        let heightCell = (UIScreen.main.bounds.width - 20.0) / 3.0
         
         //расположение Label в ячейке
         addSubview(nameLabel)
@@ -184,18 +238,23 @@ extension MyCollectionViewController: UICollectionViewDropDelegate {
                 databaseRadio.insert(temp, at: destinationIndexPath.item)
                 collectionView.deleteItems(at: [sourceIndexPath])
                 collectionView.insertItems(at: [destinationIndexPath])
+                var k = currentStation
 //                print("currentStation - ", currentStation)
                 if sourceIndexPath.item == currentStation {
-                    saveViewTable(value: destinationIndexPath.item)
+                    k = destinationIndexPath.item
                 } else {
-                    if sourceIndexPath.item < currentStation {
-                        currentStation -= 1
+                    if sourceIndexPath.item < currentStation && destinationIndexPath.item == currentStation {
+                        k -= 1
                     }
-                    if destinationIndexPath.item <= currentStation {
-                        currentStation += 1
+                    if sourceIndexPath.item > currentStation && destinationIndexPath.item <= currentStation {
+                        k += 1
                     }
-                    saveViewTable(value: currentStation)
                 }
+                if currentStation != k {
+                    currentStationChange = true
+                }
+                currentStation = k
+                saveViewTable(value: currentStation)
 //                print("sourceIndexPath.item - ", sourceIndexPath.item)
 //                print("destinationIndexPath.item - ", destinationIndexPath.item)
 //                print("Сохранил - ", currentStation)

@@ -34,8 +34,7 @@ final class NetworkReachability {
 }
 
 final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDelegate {
-    
-    var navigationBar = UINavigationBar()
+
     var play = true
     var changeThemeValue = true
     var shuffle = false
@@ -143,27 +142,26 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     }
     
     override func viewDidAppear(_ animated: Bool) {
-        loadStation()
         if tableViewFlag {
             if let temp = UserDefaults.standard.array(forKey: "fromViewTable") {
                 fromViewTable = temp
-                if let temp = fromViewTable[0] as? Int {
-                    if temp > 5 && repeatValue {
+                if let value = fromViewTable[0] as? Int {
+                    if value > 5 && repeatValue {
                         repeatFunc()
                     }
 //                    print("старое занчение - ", i)
-//                    print("Новое занчение - ", temp)
-                    if temp != i && !changeDataBaseRadio {
-                        i = temp
+//                    print("Новое занчение - ", value)
+                    if currentStationChange && value != i {
+                        i = value
+                    } else if value != i && !changeDataBaseRadio {
+                        i = value
                         changeStation(i)
                     }
-                    if temp != i && changeDataBaseRadio {
-                        i = temp
-                    }
-            }
+                }
             }
         }
         tableViewFlag = !tableViewFlag
+        currentStationChange = false
     }
     
     //ставим pause при звонке и play по окончанию звонка
@@ -246,20 +244,20 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     
     //MARK: - функция смены станций и старта плеера
     private func changeStation (_ value: Int) {
-        var valueTemp = 0
-        if value > databaseRadio.count {
-            valueTemp = 0
-            i = 0
-        } else {
-            valueTemp = value
-        }
+//        var valueTemp = 0
+//        if value > databaseRadio.count {
+//            valueTemp = 0
+//            i = 0
+//        } else {
+//            valueTemp = value
+//        }
         
         checkInetTimer.invalidate()
         playback = false
         
-        titleTextLabel.text = databaseRadio[valueTemp].2
+        titleTextLabel.text = databaseRadio[value].2
         
-        let urlRadio = URL(string: String(databaseRadio[valueTemp].0))
+        let urlRadio = URL(string: String(databaseRadio[value].0))
         let inetPlayerItem = AVPlayerItem(url: urlRadio ?? URL(string: "http://www.ru")!)
         metadataOutput = AVPlayerItemMetadataOutput(identifiers: nil)
         metadataOutput.setDelegate(self, queue: .main)
@@ -267,7 +265,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         inetPlayer = AVPlayer(playerItem: inetPlayerItem)
 
         if play {
-            //titleImage = UIImage(named: databaseRadio[valueTemp].1) ?? UIImage(named: "default")!
+            titleImage = UIImage(named: databaseRadio[value].1) ?? UIImage(named: "default")!
             startAnimation()
             inetPlayerItem.preferredForwardBufferDuration = 10
             inetPlayer.play()
@@ -282,6 +280,8 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         } else {
             inetPlayer.pause()
             metaDataLabel.text = ""
+            //передаем в команд-центр ""
+            setupNowPlaying(title: titleTextLabel.text!, setImage: titleImage, artist: metaDataLabel.text)
             stopAnimation()
             playback = false
         }
