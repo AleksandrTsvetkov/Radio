@@ -84,7 +84,7 @@ class MyCollectionViewController: UICollectionViewController, UICollectionViewDe
         }
     }
     
-    //Добавление станции
+    //MARK: - Добавление станции
     @objc func addFunc () {
         let alertController = UIAlertController(title: "Добавить станцию", message: "", preferredStyle: UIAlertController.Style.alert)
         alertController.addTextField { (textField : UITextField!) -> Void in
@@ -111,7 +111,7 @@ class MyCollectionViewController: UICollectionViewController, UICollectionViewDe
         self.present(alertController, animated: true, completion: nil)
     }
 
-    //удаление станции
+    //MARK: - удаление станции
     private func deleteFunc (_ indexPath: IndexPath) {
         let alertController = UIAlertController(title: "Удалить станцию?\n", message: databaseRadio[indexPath.row].2, preferredStyle: UIAlertController.Style.alert)
         let saveAction = UIAlertAction(title: "Да", style: UIAlertAction.Style.default, handler: { alert -> Void in

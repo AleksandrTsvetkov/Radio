@@ -70,28 +70,28 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     var playback = false
     
     //отвечает за номер радиостанции
-    var i = 0 {
+    var stationNumber = 0 {
         didSet {
             if shuffle {
-                var temp = i
-                while temp == i {
+                var temp = stationNumber
+                while temp == stationNumber {
                     temp = Int.random(in: 0..<databaseRadio.count)
                 }
-                i = temp
+                stationNumber = temp
             } else if repeatValue {
-                switch i {
-                case 6: i = 0
-                case -1: i = 5
+                switch stationNumber {
+                case 6: stationNumber = 0
+                case -1: stationNumber = 5
                 default: break
                 }
             }
-            switch i {
-            case databaseRadio.count: i = 0
-            case -1: i = databaseRadio.count - 1
+            switch stationNumber {
+            case databaseRadio.count: stationNumber = 0
+            case -1: stationNumber = databaseRadio.count - 1
             default: break
             }
             //запоминание последней включенной станции
-            saveData[0] = i
+            saveData[0] = stationNumber
             saveDataFunc()
         }
     }
@@ -99,13 +99,13 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        //загружаем данные: последнюю включенную станцию
+        //загружаем базу станций
         loadStation()
         //згаружаем последние настройки приложения
         loadDataFunc()
         
         if let temp = saveData[0] as? Int {
-            i = temp
+            stationNumber = temp
         }
         if let temp = saveData[1] as? Bool {
             changeThemeValue = temp
@@ -117,7 +117,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
             shuffle = temp
         }
         
-        changeStation(i)
+        changeStation(stationNumber)
         setupRemoteTransportControls()
         changeTheme(changeThemeValue)
         createViewElements()
@@ -149,13 +149,17 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
                     if value > 5 && repeatValue {
                         repeatFunc()
                     }
-//                    print("старое занчение - ", i)
+//                    print("старое занчение - ", stationNumber)
 //                    print("Новое занчение - ", value)
-                    if currentStationChange && value != i {
-                        i = value
-                    } else if value != i && !changeDataBaseRadio {
-                        i = value
-                        changeStation(i)
+//                    print(currentStationChange)
+                    if currentStationChange && value != stationNumber {
+                        stationNumber = value
+                    } else if value != stationNumber && !changeDataBaseRadio {
+                        stationNumber = value
+                        changeStation(stationNumber)
+                    } else if currentStationChange && value == stationNumber {
+                        stationNumber = value
+                        changeStation(stationNumber)
                     }
                 }
             }
@@ -303,7 +307,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
             setupNowPlaying(title: titleTextLabel.text!, setImage: titleImage, artist: metaDataLabel.text)
             
         case true where !internetNow:
-            changeStation(i)
+            changeStation(stationNumber)
             imageOutlet.layer.borderWidth = 2
             imageOutlet.layer.borderColor = UIColor.white.cgColor
             metaDataLabel.textColor = textColor
@@ -321,7 +325,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         if inetPlayer.reasonForWaitingToPlay?.rawValue != nil {
             metaDataLabel.text = "Загружаю..."
         } else {
-            if let tempImage = UIImage(named: databaseRadio[i].1) {
+            if let tempImage = UIImage(named: databaseRadio[stationNumber].1) {
                 imageOutlet.image = tempImage
             } else {
                 imageOutlet.startAnimating()
@@ -431,17 +435,17 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
             playOutlet.setImage(imagePause, for: .normal)
         }
         play = !play
-        changeStation(i)
+        changeStation(stationNumber)
     }
     
     @objc func forwardButton (_ sender: Any) {
-        i += 1
-        changeStation(i)
+        stationNumber += 1
+        changeStation(stationNumber)
     }
     
     @objc func backwardButton (_ sender: Any) {
-        i -= 1
-        changeStation(i)
+        stationNumber -= 1
+        changeStation(stationNumber)
     }
     
     //MARK: - Настройка кнопок управления в команд центре
@@ -465,14 +469,14 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         }
         
         commandCenter.nextTrackCommand.addTarget { [unowned self] event in
-            self.i += 1
-            self.changeStation(self.i)
+            self.stationNumber += 1
+            self.changeStation(self.stationNumber)
             return .success
         }
         
         commandCenter.previousTrackCommand.addTarget { [unowned self] event in
-            self.i -= 1
-            self.changeStation(self.i)
+            self.stationNumber -= 1
+            self.changeStation(self.stationNumber)
             return .success
         }
     }
@@ -491,33 +495,33 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         imageOutlet.animationImages = Data.imageArray
         imageOutlet.animationDuration = 1.0
         imageOutlet.animationRepeatCount = 0
-        if UIImage(named: databaseRadio[i].1) == nil {
+        if UIImage(named: databaseRadio[stationNumber].1) == nil {
             imageOutlet.image = UIImage(named: "01a")!
         } else {
-            imageOutlet.image = UIImage(named: databaseRadio[i].1)
+            imageOutlet.image = UIImage(named: databaseRadio[stationNumber].1)
         }
     }
     private func stopAnimation() {
         imageOutlet.stopAnimating()
         imageOutlet.animationImages = nil
-        if UIImage(named: databaseRadio[i].1) == nil {
+        if UIImage(named: databaseRadio[stationNumber].1) == nil {
             imageOutlet.image = UIImage(named: "01a")!
         } else {
-            imageOutlet.image = UIImage(named: databaseRadio[i].1)
+            imageOutlet.image = UIImage(named: databaseRadio[stationNumber].1)
         }
     }
     
     //перенести станцию в начало списка
     @objc func favoriteFunc () {
-        databaseRadio.insert(databaseRadio[i], at: 0)
-        databaseRadio.remove(at: i+1)
+        databaseRadio.insert(databaseRadio[stationNumber], at: 0)
+        databaseRadio.remove(at: stationNumber + 1)
         saveStation()
         let alertController = UIAlertController(title: "", message: " Станция перенесена в начало списка", preferredStyle: .alert)
         let action = UIAlertAction(title: "Ok", style: .default) { (action) in
         }
         alertController.addAction(action)
         self.present(alertController, animated: true, completion: nil)
-        i = 0
+        stationNumber = 0
     }
     
     //включаем/отключаем shuffle
@@ -555,9 +559,9 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
             repeatButton.layer.shadowOpacity = 0
             repeatButton.layer.shadowRadius = 0
         }
-        if i >= 6 {
-            i = 0
-            changeStation(i)
+        if stationNumber >= 6 {
+            stationNumber = 0
+            changeStation(stationNumber)
         }
         saveData[2] = repeatValue
         saveDataFunc()
@@ -570,7 +574,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         let flowLayout = UICollectionViewFlowLayout()
         let myCollectionViewController = MyCollectionViewController(collectionViewLayout: flowLayout)
         myCollectionViewController.changeThemeValue = changeThemeValue
-        myCollectionViewController.currentStation = i
+        myCollectionViewController.currentStation = stationNumber
         self.navigationController?.pushViewController(myCollectionViewController, animated: true)
     }
     
