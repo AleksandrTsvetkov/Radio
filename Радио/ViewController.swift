@@ -271,7 +271,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         if play {
             titleImage = UIImage(named: databaseRadio[value].1) ?? UIImage(named: "default")!
             startAnimation()
-            inetPlayerItem.preferredForwardBufferDuration = 10
+            //inetPlayerItem.preferredForwardBufferDuration = 10
             inetPlayer.play()
             inetPlayer.volume = 0
             

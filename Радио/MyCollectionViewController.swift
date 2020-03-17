@@ -13,11 +13,22 @@ class MyCollectionViewController: UICollectionViewController, UICollectionViewDe
     var changeThemeValue = Bool()
     var backColor = UIColor()
     var currentStation = Int()
+    var searchStation = Int()
+    var searchStationArray = [Int]()
     var addButton = UIButton()
     var textLabel = UILabel()
+    var dataSource = [String]()
+    var dataSourceForSearchResult = [String]()
+    var databaseSearch: [(String, String, String)] = []
+    let searchController = UISearchController(searchResultsController: nil)
+    var isSearchBarEmpty: Bool {
+        return searchController.searchBar.text?.isEmpty ?? true
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        dataSourceFunc()
         
         tableViewFlag = true
         changeDataBaseRadio = false
@@ -32,18 +43,34 @@ class MyCollectionViewController: UICollectionViewController, UICollectionViewDe
         
         let view1 = UIViewController()
         addChild(view1)
-        view1.view.frame = CGRect(x: 0, y: 0, width: view.frame.size.width, height: 120)
+        view1.view.frame = CGRect(x: 0, y: 0, width: view.frame.size.width, height: 150)
         view1.view.backgroundColor = backColor
         view.addSubview(view1.view)
         
-        textLabel.frame = CGRect(x: 10, y: 70, width: 250, height: 50)
+        textLabel.frame = CGRect(x: 10, y: 100, width: 250, height: 50)
         textLabel.text = "Радиостанции"
         textLabel.textColor = textColor
         textLabel.font = UIFont.boldSystemFont(ofSize: 32)
         view1.view.addSubview(textLabel)
         
+        //SearchBar
+        searchController.searchResultsUpdater = self
+        searchController.searchBar.delegate = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.searchBarStyle = .prominent
+        searchController.searchBar.placeholder = "Поиск"
+        searchController.hidesNavigationBarDuringPresentation = false
+        searchController.searchBar.tintColor = textColor
+        searchController.searchBar.barTintColor = .blue
+        searchController.searchBar.searchTextField.leftView?.tintColor = .gray
+        searchController.searchBar.searchTextField.textInputView.tintColor = textColor
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
+        UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).textColor = textColor
+        
+        
         collectionView?.backgroundView = backgroundImage
-        collectionView?.frame = CGRect(x: 0, y: 120, width: view.frame.size.width, height: view.frame.size.height-120)
+        collectionView?.frame = CGRect(x: 0, y: 150, width: view.frame.size.width, height: view.frame.size.height-150)
         //расстояния между ячейками и от краев экрана
         let layout = UICollectionViewFlowLayout()
         layout.sectionInset = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: 5)
@@ -70,22 +97,51 @@ class MyCollectionViewController: UICollectionViewController, UICollectionViewDe
         longPress.delegate = self
         collectionView?.addGestureRecognizer(longPress)
     }
+
+    
+    func dataSourceFunc() {
+        dataSource.removeAll()
+        for h in 0..<databaseRadio.count {
+            dataSource.append(databaseRadio[h].2)
+        }
+    }
+    
+    //формируем массив из найденых станций
+    func radioSearchFunc() -> [Int] {
+        var n = 0
+        var array = [Int]()
+        databaseSearch.removeAll()
+        for value in databaseRadio {
+            for temp in dataSourceForSearchResult {
+                if value.2 == temp {
+                    databaseSearch.append(value)
+                    array.append(databaseRadio.index(after: n) - 1)
+                }
+            }
+            n += 1
+        }
+        return array
+    }
     
     //долгий тап на ячейке
-    @objc func handleLongPress (gesture : UILongPressGestureRecognizer!) {
+    @objc func handleLongPress(gesture : UILongPressGestureRecognizer!) {
         if gesture.state != .began {
             return
         }
         let p = gesture.location(in: self.collectionView)
         if let indexPath = self.collectionView.indexPathForItem(at: p) {
             if databaseRadio.count > 1 {
-                deleteFunc(indexPath)
+                var n = 0
+                if isFiltering {
+                    n = searchStationArray[indexPath.row]
+                }
+                deleteFunc(indexPath, value: n)
             }
         }
     }
     
     //MARK: - Добавление станции
-    @objc func addFunc () {
+    @objc func addFunc() {
         let alertController = UIAlertController(title: "Добавить станцию", message: "", preferredStyle: UIAlertController.Style.alert)
         alertController.addTextField { (textField : UITextField!) -> Void in
                textField.placeholder = "Название станции"
@@ -96,6 +152,7 @@ class MyCollectionViewController: UICollectionViewController, UICollectionViewDe
                let secondTextField = String(alertController.textFields?[1].text ?? "")
             if firstTextField.count != 0 && secondTextField.count != 0 {
                 databaseRadio.append(("http://" + secondTextField, "", firstTextField))
+                self.dataSourceFunc()
                 saveStation()
                 self.collectionView.reloadData()
             }
@@ -112,14 +169,29 @@ class MyCollectionViewController: UICollectionViewController, UICollectionViewDe
     }
 
     //MARK: - удаление станции
-    private func deleteFunc (_ indexPath: IndexPath) {
-        let alertController = UIAlertController(title: "Удалить станцию?\n", message: databaseRadio[indexPath.row].2, preferredStyle: UIAlertController.Style.alert)
+    private func deleteFunc(_ indexPath: IndexPath, value: Int) {
+        var message = String()
+        var number = Int()
+        if isFiltering {
+            message = databaseRadio[value].2
+            number = value
+        } else {
+            message = databaseRadio[indexPath.row].2
+            number = indexPath.row
+        }
+        
+        let alertController = UIAlertController(title: "Удалить станцию?\n", message: message, preferredStyle: UIAlertController.Style.alert)
         let saveAction = UIAlertAction(title: "Да", style: UIAlertAction.Style.default, handler: { alert -> Void in
             
-            databaseRadio.remove(at: indexPath.row)
+            databaseRadio.remove(at: number)
             self.collectionView.deleteItems(at: [indexPath])
             self.collectionView.reloadData()
+            self.dataSourceFunc()
             saveStation()
+            if self.isFiltering {
+                self.searchController.isActive = false
+                self.collectionView.reloadData()
+            }
            })
         let cancelAction = UIAlertAction(title: "нет", style: UIAlertAction.Style.default, handler: {
                (action : UIAlertAction!) -> Void in })
@@ -129,19 +201,29 @@ class MyCollectionViewController: UICollectionViewController, UICollectionViewDe
         self.present(alertController, animated: true, completion: nil)
     }
 
-    
+    //MARK: - CollectionView
     //количество ячеек
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return databaseRadio.count
+        if isFiltering {
+            return dataSourceForSearchResult.count
+        } else {
+            return databaseRadio.count
+        }
     }
     //содержание ячеек
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        var image = UIImage()
+        var value = String()
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as! myViewCell
-        let image = UIImage(named: databaseRadio[indexPath.row].1) ?? UIImage(named: "default")
-        let value = databaseRadio[indexPath.row].2
+        if isFiltering {
+            value = databaseSearch[indexPath.row].2
+            image = UIImage(named: databaseSearch[indexPath.row].1) ?? UIImage(named: "default")!
+        } else {
+            image = UIImage(named: databaseRadio[indexPath.row].1) ?? UIImage(named: "default")!
+            value = dataSource[indexPath.row]
+        }
         cell.imageView.image = image
         cell.nameLabel.text = value
-        
         return cell
     }
     //размер ячеек
@@ -151,7 +233,11 @@ class MyCollectionViewController: UICollectionViewController, UICollectionViewDe
     }
     //срабатывает при выборе ячейки
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        saveViewTable(value: indexPath.row)
+        var n = indexPath.row
+        if isFiltering {
+            n = searchStationArray[indexPath.row]
+        }
+        saveViewTable(value: n)
         self.navigationController?.popViewController(animated: true)
     }
 }
@@ -210,7 +296,7 @@ extension MyCollectionViewController: UICollectionViewDragDelegate {
 
 extension MyCollectionViewController: UICollectionViewDropDelegate {
     func collectionView(_ collectionView: UICollectionView, dropSessionDidUpdate session: UIDropSession, withDestinationIndexPath destinationIndexPath: IndexPath?) -> UICollectionViewDropProposal {
-        if collectionView.hasActiveDrag {
+        if collectionView.hasActiveDrag && !isFiltering {
             return UICollectionViewDropProposal(operation: .move, intent: .insertAtDestinationIndexPath)
         }
         return UICollectionViewDropProposal(operation: .forbidden)
@@ -259,9 +345,34 @@ extension MyCollectionViewController: UICollectionViewDropDelegate {
 //                print("destinationIndexPath.item - ", destinationIndexPath.item)
 //                print("Сохранил - ", currentStation)
                 changeDataBaseRadio = true
+                dataSourceFunc()
                 saveStation()
             }, completion: nil)
             coordinator.drop(item.dragItem, toItemAt: destinationIndexPath)
         }
     }
 }
+
+//MARK: - Расширение для SearchBar
+extension MyCollectionViewController: UISearchResultsUpdating, UISearchBarDelegate {
+    
+    //символы по которым происходит поиск
+    func updateSearchResults(for searchController: UISearchController) {
+      let searchBar = searchController.searchBar
+        filterContentForSearchText(searchText: searchBar.text!)
+    }
+    //формируем массив с совпавшими символами
+    func filterContentForSearchText(searchText: String) {
+        dataSourceForSearchResult = dataSource.filter({ (text:String) -> Bool in
+            return text.lowercased().contains(searchText.lowercased())
+        })
+        searchStationArray = radioSearchFunc()
+        collectionView?.reloadData()
+    }
+    //сигнализатор включен поиск или нет
+    var isFiltering: Bool {
+      let searchBarScopeIsFiltering = searchController.searchBar.selectedScopeButtonIndex != 0
+      return searchController.isActive && (!isSearchBarEmpty || searchBarScopeIsFiltering)
+    }
+}
+

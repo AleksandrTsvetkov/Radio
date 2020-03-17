@@ -12,7 +12,7 @@
 		8538A4E223FAE0C900AA749B /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8538A4E023FAE0C900AA749B /* LaunchScreen.storyboard */; };
 		8538A4F023FB1BCC00AA749B /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8538A4EF23FB1BCC00AA749B /* Images.xcassets */; };
 		85891BAE241E3FA80077ADE2 /* MyCollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85891BAD241E3FA80077ADE2 /* MyCollectionViewController.swift */; };
-		858FBEEE2407B8AD0079616E /* Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = 858FBEED2407B8AD0079616E /* Data.swift */; };
+		858FBEEE2407B8AD0079616E /* DataRadio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 858FBEED2407B8AD0079616E /* DataRadio.swift */; };
 		85DCC98A24042C7E00F2B782 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85DCC98924042C7E00F2B782 /* ViewController.swift */; };
 /* End PBXBuildFile section */
 
@@ -24,7 +24,7 @@
 		8538A4E323FAE0C900AA749B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8538A4EF23FB1BCC00AA749B /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		85891BAD241E3FA80077ADE2 /* MyCollectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyCollectionViewController.swift; sourceTree = "<group>"; };
-		858FBEED2407B8AD0079616E /* Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Data.swift; sourceTree = "<group>"; };
+		858FBEED2407B8AD0079616E /* DataRadio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataRadio.swift; sourceTree = "<group>"; };
 		85DCC98924042C7E00F2B782 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -59,7 +59,7 @@
 		8538A4D823FAE0C800AA749B /* Радио */ = {
 			isa = PBXGroup;
 			children = (
-				858FBEED2407B8AD0079616E /* Data.swift */,
+				858FBEED2407B8AD0079616E /* DataRadio.swift */,
 				8538A4D923FAE0C900AA749B /* AppDelegate.swift */,
 				85DCC98924042C7E00F2B782 /* ViewController.swift */,
 				85891BAD241E3FA80077ADE2 /* MyCollectionViewController.swift */,
@@ -149,7 +149,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8538A4DA23FAE0C900AA749B /* AppDelegate.swift in Sources */,
-				858FBEEE2407B8AD0079616E /* Data.swift in Sources */,
+				858FBEEE2407B8AD0079616E /* DataRadio.swift in Sources */,
 				85DCC98A24042C7E00F2B782 /* ViewController.swift in Sources */,
 				85891BAE241E3FA80077ADE2 /* MyCollectionViewController.swift in Sources */,
 			);
