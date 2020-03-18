@@ -45,6 +45,10 @@ class MyCollectionViewController: UICollectionViewController, UICollectionViewDe
         addChild(view1)
         view1.view.frame = CGRect(x: 0, y: 0, width: view.frame.size.width, height: 150)
         view1.view.backgroundColor = backColor
+        view1.view.layer.shadowOpacity = 1.0
+        view1.view.layer.shadowRadius = 10
+        view1.view.layer.shadowOffset = CGSize(width: 0, height: 0)
+        view1.view.layer.shadowColor = UIColor.black.cgColor
         view.addSubview(view1.view)
         
         textLabel.frame = CGRect(x: 10, y: 100, width: 250, height: 50)
@@ -60,13 +64,10 @@ class MyCollectionViewController: UICollectionViewController, UICollectionViewDe
         searchController.searchBar.searchBarStyle = .prominent
         searchController.searchBar.placeholder = "Поиск"
         searchController.hidesNavigationBarDuringPresentation = false
-        searchController.searchBar.tintColor = textColor
-        searchController.searchBar.barTintColor = .blue
         searchController.searchBar.searchTextField.leftView?.tintColor = .gray
-        searchController.searchBar.searchTextField.textInputView.tintColor = textColor
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
-        UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).textColor = textColor
+        UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).defaultTextAttributes = [NSAttributedString.Key.foregroundColor: textColor]
         
         
         collectionView?.backgroundView = backgroundImage
@@ -99,7 +100,7 @@ class MyCollectionViewController: UICollectionViewController, UICollectionViewDe
     }
 
     
-    func dataSourceFunc() {
+    private func dataSourceFunc() {
         dataSource.removeAll()
         for h in 0..<databaseRadio.count {
             dataSource.append(databaseRadio[h].2)
@@ -107,7 +108,7 @@ class MyCollectionViewController: UICollectionViewController, UICollectionViewDe
     }
     
     //формируем массив из найденых станций
-    func radioSearchFunc() -> [Int] {
+    private func radioSearchFunc() -> [Int] {
         var n = 0
         var array = [Int]()
         databaseSearch.removeAll()
@@ -227,7 +228,7 @@ class MyCollectionViewController: UICollectionViewController, UICollectionViewDe
         return cell
     }
     //размер ячеек
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+    internal func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let heightCell = (self.view.frame.size.width - 20.0) / 3.0
         return CGSize(width: heightCell, height: heightCell + 20)
     }
@@ -286,7 +287,7 @@ final class myViewCell: UICollectionViewCell {
 
 //MARK: - Drag & Drop
 extension MyCollectionViewController: UICollectionViewDragDelegate {
-    func collectionView(_ collectionView: UICollectionView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
+    internal func collectionView(_ collectionView: UICollectionView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
         let itemProvider = NSItemProvider(object: "\(indexPath)" as NSString)
         let dragItem = UIDragItem(itemProvider: itemProvider)
         dragItem.localObject = databaseRadio[indexPath.row]
@@ -295,14 +296,14 @@ extension MyCollectionViewController: UICollectionViewDragDelegate {
 }
 
 extension MyCollectionViewController: UICollectionViewDropDelegate {
-    func collectionView(_ collectionView: UICollectionView, dropSessionDidUpdate session: UIDropSession, withDestinationIndexPath destinationIndexPath: IndexPath?) -> UICollectionViewDropProposal {
+    internal func collectionView(_ collectionView: UICollectionView, dropSessionDidUpdate session: UIDropSession, withDestinationIndexPath destinationIndexPath: IndexPath?) -> UICollectionViewDropProposal {
         if collectionView.hasActiveDrag && !isFiltering {
             return UICollectionViewDropProposal(operation: .move, intent: .insertAtDestinationIndexPath)
         }
         return UICollectionViewDropProposal(operation: .forbidden)
     }
     
-    func collectionView(_ collectionView: UICollectionView, performDropWith coordinator: UICollectionViewDropCoordinator) {
+    internal func collectionView(_ collectionView: UICollectionView, performDropWith coordinator: UICollectionViewDropCoordinator) {
         var destinationIndexPath: IndexPath
         if let indexPath = coordinator.destinationIndexPath {
             destinationIndexPath = indexPath
@@ -357,12 +358,12 @@ extension MyCollectionViewController: UICollectionViewDropDelegate {
 extension MyCollectionViewController: UISearchResultsUpdating, UISearchBarDelegate {
     
     //символы по которым происходит поиск
-    func updateSearchResults(for searchController: UISearchController) {
+    internal func updateSearchResults(for searchController: UISearchController) {
       let searchBar = searchController.searchBar
         filterContentForSearchText(searchText: searchBar.text!)
     }
     //формируем массив с совпавшими символами
-    func filterContentForSearchText(searchText: String) {
+    private func filterContentForSearchText(searchText: String) {
         dataSourceForSearchResult = dataSource.filter({ (text:String) -> Bool in
             return text.lowercased().contains(searchText.lowercased())
         })
