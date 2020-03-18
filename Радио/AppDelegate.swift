@@ -17,6 +17,8 @@ public var tableViewFlag = false
 public var changeDataBaseRadio = false
 public var navigationBar = UINavigationBar()
 public var currentStationChange = false
+public var shuffle = false
+public var repeatValue = false
 
 //сохранение данных
 func saveDataFunc () {

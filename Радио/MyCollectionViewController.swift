@@ -7,7 +7,7 @@
 //
 import UIKit
 
-class MyCollectionViewController: UICollectionViewController, UICollectionViewDelegateFlowLayout, UIGestureRecognizerDelegate {
+final class MyCollectionViewController: UICollectionViewController, UICollectionViewDelegateFlowLayout, UIGestureRecognizerDelegate {
     
     var backgroundImage = UIImageView()
     var changeThemeValue = Bool()
@@ -125,7 +125,8 @@ class MyCollectionViewController: UICollectionViewController, UICollectionViewDe
     }
     
     //долгий тап на ячейке
-    @objc func handleLongPress(gesture : UILongPressGestureRecognizer!) {
+    @objc
+    private func handleLongPress(gesture : UILongPressGestureRecognizer!) {
         if gesture.state != .began {
             return
         }
@@ -142,7 +143,8 @@ class MyCollectionViewController: UICollectionViewController, UICollectionViewDe
     }
     
     //MARK: - Добавление станции
-    @objc func addFunc() {
+    @objc
+    private func addFunc() {
         let alertController = UIAlertController(title: "Добавить станцию", message: "", preferredStyle: UIAlertController.Style.alert)
         alertController.addTextField { (textField : UITextField!) -> Void in
                textField.placeholder = "Название станции"
@@ -326,7 +328,6 @@ extension MyCollectionViewController: UICollectionViewDropDelegate {
                 collectionView.deleteItems(at: [sourceIndexPath])
                 collectionView.insertItems(at: [destinationIndexPath])
                 var k = currentStation
-//                print("currentStation - ", currentStation)
                 if sourceIndexPath.item == currentStation {
                     k = destinationIndexPath.item
                 } else {
@@ -342,9 +343,6 @@ extension MyCollectionViewController: UICollectionViewDropDelegate {
                 }
                 currentStation = k
                 saveViewTable(value: currentStation)
-//                print("sourceIndexPath.item - ", sourceIndexPath.item)
-//                print("destinationIndexPath.item - ", destinationIndexPath.item)
-//                print("Сохранил - ", currentStation)
                 changeDataBaseRadio = true
                 dataSourceFunc()
                 saveStation()

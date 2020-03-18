@@ -33,12 +33,10 @@ final class NetworkReachability {
     }
 }
 
-final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDelegate {
+final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDelegate, popProtocol {
 
     var play = true
     var changeThemeValue = true
-    var shuffle = false
-    var repeatValue = false
     let pickerTimer = UIDatePicker()
     let sleepTimerLabel = UILabel()
     let metaDataLabel = UILabel()
@@ -50,17 +48,12 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     var backButtonOutlet = UIButton()
     var nextButtonOutlet = UIButton()
     var playOutlet = UIButton()
-    var sleepTimerButton = UIButton()
-    var themeButton = UIButton()
+    var gearButton = UIButton()
     var volumeMin = UIImageView()
     var volumeMax = UIImageView()
     var titleImage = UIImage()
     var titleTextLabel = UILabel()
     var favoriteButton = UIButton()
-    var shuffleButton = UIButton()
-    var repeatButton = UIButton()
-    var shuffleColor = textColor
-    var repeatColor = textColor
     var metadataOutput = AVPlayerItemMetadataOutput()
     var networkReachability = NetworkReachability()
     var checkInetTimer = Timer()
@@ -119,7 +112,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         
         changeStation(stationNumber)
         setupRemoteTransportControls()
-        changeTheme(changeThemeValue)
+        changeTheme()
         createViewElements()
         
         if repeatValue {
@@ -149,9 +142,6 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
                     if value > 5 && repeatValue {
                         repeatFunc()
                     }
-//                    print("старое занчение - ", stationNumber)
-//                    print("Новое занчение - ", value)
-//                    print(currentStationChange)
                     if currentStationChange && value != stationNumber {
                         stationNumber = value
                     } else if value != stationNumber && !changeDataBaseRadio {
@@ -169,7 +159,8 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     }
     
     //ставим pause при звонке и play по окончанию звонка
-    @objc func handleInterruption (notification: Notification) {
+    @objc
+    private func handleInterruption (notification: Notification) {
         guard let userInfo = notification.userInfo,
             let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
             let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
@@ -192,7 +183,8 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     }
 
     //плавная громкость
-    @objc func volumeUp () {
+    @objc
+    private func volumeUp () {
         if volumeValue <= 1.0 {
             inetPlayer.volume = volumeValue
             volumeValue += 0.01
@@ -204,7 +196,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     }
     
     //MARK: - кнопка смена темы
-    @objc func changeTheme (_ sender: Any) {
+    internal func changeTheme() {
         if self.inetPlayer.rate == 0.0 {
             playOutlet.setImage(UIImage(named: "play1.png")!, for: .highlighted)
         } else {
@@ -220,21 +212,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         titleTextLabel.textColor = textColor
         backButtonOutlet.setImage(imageBack, for: .normal)
         nextButtonOutlet.setImage(imageNext, for: .normal)
-        themeButton.setImage(themeImage, for: .normal)
-        sleepTimerButton.tintColor = textColor
-        themeButton.tintColor = textColor
-        
-        if shuffle {
-            shuffleButton.tintColor = .systemRed
-        } else {
-            shuffleButton.tintColor = textColor
-        }
-        
-        if repeatValue {
-            repeatButton.tintColor = .systemRed
-        } else {
-            repeatButton.tintColor = textColor
-        }
+        gearButton.tintColor = textColor
         
         if play {
             playOutlet.setImage(imagePause, for: .normal)
@@ -248,20 +226,20 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     
     //MARK: - функция смены станций и старта плеера
     private func changeStation (_ value: Int) {
-//        var valueTemp = 0
-//        if value > databaseRadio.count {
-//            valueTemp = 0
-//            i = 0
-//        } else {
-//            valueTemp = value
-//        }
+        var valueTemp = 0
+        if value >= databaseRadio.count {
+            valueTemp = 0
+            stationNumber = 0
+        } else {
+            valueTemp = value
+        }
         
         checkInetTimer.invalidate()
         playback = false
         
-        titleTextLabel.text = databaseRadio[value].2
+        titleTextLabel.text = databaseRadio[valueTemp].2
         
-        let urlRadio = URL(string: String(databaseRadio[value].0))
+        let urlRadio = URL(string: String(databaseRadio[valueTemp].0))
         let inetPlayerItem = AVPlayerItem(url: urlRadio ?? URL(string: "http://www.ru")!)
         metadataOutput = AVPlayerItemMetadataOutput(identifiers: nil)
         metadataOutput.setDelegate(self, queue: .main)
@@ -269,7 +247,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         inetPlayer = AVPlayer(playerItem: inetPlayerItem)
 
         if play {
-            titleImage = UIImage(named: databaseRadio[value].1) ?? UIImage(named: "default")!
+            titleImage = UIImage(named: databaseRadio[valueTemp].1) ?? UIImage(named: "default")!
             startAnimation()
             //inetPlayerItem.preferredForwardBufferDuration = 10
             inetPlayer.play()
@@ -292,7 +270,8 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     }
     
     //реакция - если пропал или появился интернет
-    @objc private func checkInternetConnection() {
+    @objc
+    private func checkInternetConnection() {
     
         switch internetValue {
         case false where internetNow:
@@ -374,7 +353,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     }
     
     //MARK: - Установка таймера сна
-    @objc func timerButton (_ sender: Any) {
+    internal func timerButton() {
         pickerTimer.datePickerMode = .countDownTimer
         pickerTimer.frame = CGRect(x: 50, y: 40, width: 200, height: 150)
         
@@ -395,7 +374,8 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         self.present(alertController, animated: true, completion: nil)
     }
 
-    @objc func updateTimer () {
+    @objc
+    private func updateTimer () {
         let hour = Int(valueTimer / 3600)
         let min = Int(valueTimer / 60) - hour * 60
         let sec = Int(valueTimer) - hour * 3600 - min * 60
@@ -426,7 +406,8 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     }
     
     //MARK: - Кнопки управления в приложении
-    @objc func playButton (_ sender: Any) {
+    @objc
+    private func playButton (_ sender: Any) {
         if play {
             playOutlet.setImage(UIImage(named: "play1.png")!, for: .highlighted)
             playOutlet.setImage(imagePlay, for: .normal)
@@ -482,7 +463,8 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     }
     
     //переключение станций свайпом
-    @objc func getSwipeAction (gesture: UISwipeGestureRecognizer) {
+    @objc
+    private func getSwipeAction (gesture: UISwipeGestureRecognizer) {
         if gesture.direction == UISwipeGestureRecognizer.Direction.right {
             backwardButton((Any).self)
         }
@@ -512,7 +494,8 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     }
     
     //перенести станцию в начало списка
-    @objc func favoriteFunc () {
+    @objc
+    private func favoriteFunc() {
         databaseRadio.insert(databaseRadio[stationNumber], at: 0)
         databaseRadio.remove(at: stationNumber + 1)
         saveStation()
@@ -525,57 +508,52 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     }
     
     //включаем/отключаем shuffle
-    @objc func shuffleFunc () {
+    internal func shuffleFunc() {
         if repeatValue {
             repeatFunc()
         }
         shuffle = !shuffle
-        if shuffle {
-            shuffleColor = .systemRed
-            shuffleButton.layer.shadowOpacity = 1.0
-            shuffleButton.layer.shadowRadius = 10
-        } else {
-            shuffleColor = textColor
-            shuffleButton.layer.shadowOpacity = 0
-            shuffleButton.layer.shadowRadius = 0
-        }
         saveData[3] = shuffle
         saveDataFunc()
-        shuffleButton.tintColor = shuffleColor
     }
     
     //включаем/отключаем repeat
-    @objc func repeatFunc () {
+    internal func repeatFunc() {
         if shuffle {
             shuffleFunc()
         }
         repeatValue = !repeatValue
-        if repeatValue {
-            repeatColor = .systemRed
-            repeatButton.layer.shadowOpacity = 1.0
-            repeatButton.layer.shadowRadius = 10
-        } else {
-            repeatColor = textColor
-            repeatButton.layer.shadowOpacity = 0
-            repeatButton.layer.shadowRadius = 0
-        }
         if stationNumber >= 6 {
             stationNumber = 0
             changeStation(stationNumber)
         }
         saveData[2] = repeatValue
         saveDataFunc()
-        repeatButton.tintColor = repeatColor
     }
 
     //переход на следующий view
-    @objc func nextViewFunc (_ sender: Any) {
+    @objc
+    private func nextViewFunc (_ sender: Any) {
         //настройки для правильного отображения CollectionViewController
         let flowLayout = UICollectionViewFlowLayout()
         let myCollectionViewController = MyCollectionViewController(collectionViewLayout: flowLayout)
         myCollectionViewController.changeThemeValue = changeThemeValue
         myCollectionViewController.currentStation = stationNumber
         self.navigationController?.pushViewController(myCollectionViewController, animated: true)
+    }
+    
+    //вызов popView
+    @objc
+    private func popMenu () {
+        let popVC = MyTableViewController()
+        popVC.modalPresentationStyle = .popover
+        let popoverVC = popVC.popoverPresentationController
+        popoverVC?.delegate = self
+        popVC.delegate = self
+        popoverVC?.sourceView = gearButton
+        popoverVC?.sourceRect = CGRect(x: gearButton.bounds.midX, y: gearButton.bounds.maxY + 10, width: 0, height: 0)
+        popoverVC?.permittedArrowDirections = UIPopoverArrowDirection(rawValue: 0)
+        self.present(popVC, animated: true, completion: nil)
     }
     
     //MARK: - располагаем элементы на вью контроллере
@@ -641,48 +619,16 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         favoriteButton.addTarget(self, action: #selector(favoriteFunc), for: .touchUpInside)
         
         //Кнопки навигатор контроллера
-        themeButton.frame = CGRect(x: 0, y: 0, width: 27, height: 26)
-        themeButton.setImage(themeImage, for: .normal)
-        themeButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
-        themeButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
-        themeButton.addTarget(self, action: #selector(changeTheme), for: .touchUpInside)
-        let item1 = UIBarButtonItem(customView: themeButton)
+        gearButton.frame = CGRect(x: 0, y: 0, width: 27, height: 26)
+        gearButton.setImage(UIImage(systemName: "gear"), for: .normal)
+        gearButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
+        gearButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
+        gearButton.addTarget(self, action: #selector(popMenu), for: .touchUpInside)
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: gearButton)
+
+
         
-        sleepTimerButton.frame = CGRect(x: 0, y: 0, width: 26, height: 25)
-        sleepTimerButton.setImage(UIImage(systemName: "timer"), for: .normal)
-        sleepTimerButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
-        sleepTimerButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
-        sleepTimerButton.addTarget(self, action: #selector(timerButton), for: .touchUpInside)
-        let item2 = UIBarButtonItem(customView: sleepTimerButton)
-        
-        shuffleButton.frame = CGRect(x: 0, y: 0, width: 30, height: 0)
-        shuffleButton.setImage(UIImage(systemName: "shuffle"), for: .normal)
-        shuffleButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
-        shuffleButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
-        shuffleButton.tintColor = textColor
-        let item3 = UIBarButtonItem(customView: shuffleButton)
-        
-        //пример создания тени к Image, еще код в методе shuffleFunc
-        shuffleButton.layer.shadowOffset = CGSize(width: 0, height: 0)
-        shuffleButton.layer.shadowColor = UIColor.white.cgColor
-        shuffleButton.addTarget(self, action: #selector(shuffleFunc), for: .touchUpInside)
-        
-        repeatButton.frame = CGRect(x: 0, y: 0, width: 30, height: 0)
-        repeatButton.setImage(UIImage(systemName: "repeat"), for: .normal)
-        repeatButton.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
-        repeatButton.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
-        repeatButton.tintColor = textColor
-        let item4 = UIBarButtonItem(customView: repeatButton)
-        
-        navigationItem.leftBarButtonItems = [item1, item2]
-        navigationItem.rightBarButtonItems = [item3, item4]
-        
-        //пример создания тени к Image, еще код в методе shuffleFunc
-        repeatButton.layer.shadowOffset = CGSize(width: 0, height: 0)
-        repeatButton.layer.shadowColor = UIColor.white.cgColor
-        repeatButton.addTarget(self, action: #selector(repeatFunc), for: .touchUpInside)
-        
-        let arrayViews = [backgroundView, imageOutlet, backButtonOutlet, nextButtonOutlet, playOutlet, sleepTimerLabel, metaDataLabel, volumeMin, volumeMax, titleTextLabel, favoriteButton, shuffleButton, repeatButton]
+        let arrayViews = [backgroundView, imageOutlet, backButtonOutlet, nextButtonOutlet, playOutlet, sleepTimerLabel, metaDataLabel, volumeMin, volumeMax, titleTextLabel, favoriteButton]
         for views in arrayViews {
             view.addSubview(views)
         }
@@ -707,5 +653,12 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         imageOutlet.addGestureRecognizer(swipeRight)
         let tap = UITapGestureRecognizer(target: self, action: #selector(nextViewFunc))
         imageOutlet.addGestureRecognizer(tap)
+    }
+}
+
+//расширение для popView
+extension ViewController: UIPopoverPresentationControllerDelegate {
+    internal func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
+        return .none
     }
 }
