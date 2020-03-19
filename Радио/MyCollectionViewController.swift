@@ -65,6 +65,7 @@ final class MyCollectionViewController: UICollectionViewController, UICollection
         searchController.searchBar.placeholder = "Поиск"
         searchController.hidesNavigationBarDuringPresentation = false
         searchController.searchBar.searchTextField.leftView?.tintColor = .gray
+        //переименовали Back на Отмена
         searchController.searchBar.setValue("Отмена", forKey: "cancelButtonText")
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
