@@ -91,7 +91,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         //загружаем базу станций
         loadStation()
         //згаружаем последние настройки приложения
