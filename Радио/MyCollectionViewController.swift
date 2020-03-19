@@ -43,7 +43,7 @@ final class MyCollectionViewController: UICollectionViewController, UICollection
         
         let view1 = UIViewController()
         addChild(view1)
-        view1.view.frame = CGRect(x: 0, y: 0, width: view.frame.size.width, height: 150)
+        view1.view.frame = CGRect(x: 0, y: 0, width: view.frame.size.width, height: view.frame.size.height * 0.225)
         view1.view.backgroundColor = backColor
         view1.view.layer.shadowOpacity = 1.0
         view1.view.layer.shadowRadius = 10
@@ -51,7 +51,7 @@ final class MyCollectionViewController: UICollectionViewController, UICollection
         view1.view.layer.shadowColor = UIColor.black.cgColor
         view.addSubview(view1.view)
         
-        textLabel.frame = CGRect(x: 10, y: 100, width: 250, height: 50)
+        textLabel.frame = CGRect(x: 10, y: view.frame.size.height * 0.15, width: 250, height: 50)
         textLabel.text = "Радиостанции"
         textLabel.textColor = textColor
         textLabel.font = UIFont.boldSystemFont(ofSize: 32)
@@ -65,13 +65,14 @@ final class MyCollectionViewController: UICollectionViewController, UICollection
         searchController.searchBar.placeholder = "Поиск"
         searchController.hidesNavigationBarDuringPresentation = false
         searchController.searchBar.searchTextField.leftView?.tintColor = .gray
+        searchController.searchBar.setValue("Отмена", forKey: "cancelButtonText")
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
         UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).defaultTextAttributes = [NSAttributedString.Key.foregroundColor: textColor]
         
         
         collectionView?.backgroundView = backgroundImage
-        collectionView?.frame = CGRect(x: 0, y: 150, width: view.frame.size.width, height: view.frame.size.height-150)
+        collectionView?.frame = CGRect(x: 0, y: view.frame.size.height * 0.225, width: view.frame.size.width, height: view.frame.size.height - view.frame.size.height * 0.225)
         //расстояния между ячейками и от краев экрана
         let layout = UICollectionViewFlowLayout()
         layout.sectionInset = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: 5)
@@ -97,6 +98,10 @@ final class MyCollectionViewController: UICollectionViewController, UICollection
         longPress.minimumPressDuration = 0.5
         longPress.delegate = self
         collectionView?.addGestureRecognizer(longPress)
+        
+        if let topItem = self.navigationController?.navigationBar.topItem {
+            topItem.backBarButtonItem = UIBarButtonItem(title: "Назад", style: .plain, target: nil, action: nil)
+        }
     }
 
     
