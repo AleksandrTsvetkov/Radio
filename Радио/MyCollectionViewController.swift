@@ -202,7 +202,7 @@ final class MyCollectionViewController: UICollectionViewController, UICollection
                 self.collectionView.reloadData()
             }
            })
-        let cancelAction = UIAlertAction(title: "нет", style: UIAlertAction.Style.default, handler: {
+        let cancelAction = UIAlertAction(title: "Нет", style: UIAlertAction.Style.default, handler: {
                (action : UIAlertAction!) -> Void in })
         
         alertController.addAction(cancelAction)

@@ -357,7 +357,7 @@ final class ViewController: UIViewController, AVPlayerItemMetadataOutputPushDele
         pickerTimer.datePickerMode = .countDownTimer
         pickerTimer.frame = CGRect(x: 50, y: 40, width: 200, height: 150)
         
-        let alertController = UIAlertController(title: "Тамер сна\n\n\n\n\n\n\n", message: nil, preferredStyle: .alert)
+        let alertController = UIAlertController(title: "Таймер сна\n\n\n\n\n\n\n", message: nil, preferredStyle: .alert)
         let okButton = UIAlertAction(title: "Готово", style: .default) { (action) in
             self.timer.invalidate()
             self.valueTimer = self.pickerTimer.countDownDuration

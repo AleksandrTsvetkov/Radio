@@ -19,10 +19,12 @@ protocol popProtocol {
 final class MyTableViewController: UITableViewController {
     
     var delegate: popProtocol?
+    var array = [String]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        array = ["", "Сменить тему", "Таймер сна", "Повтор", "Перемешать"]
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "tableCell")
         tableView.separatorStyle = .none
         tableView.allowsSelection = false
@@ -31,7 +33,7 @@ final class MyTableViewController: UITableViewController {
 
     //Размер popView
     override func viewWillLayoutSubviews() {
-        preferredContentSize = CGSize(width: 58, height: tableView.contentSize.height)
+        preferredContentSize = CGSize(width: 200, height: tableView.contentSize.height)
     }
     
     //высота ячейки - задается по желанию
@@ -55,11 +57,15 @@ final class MyTableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "tableCell", for: indexPath)
         let button = UIButton(frame: CGRect(x: 0, y: 0, width: 27, height: 27))
+        let text = array[indexPath.row]
         switch indexPath.row {
         case 1:
             button.setImage(themeImage, for: .normal)
             button.tintColor = .black
         case 2:
+            button.setImage(UIImage(systemName: "timer"), for: .normal)
+            button.tintColor = .black
+        case 3:
             button.frame = CGRect(x: 0, y: 0, width: 30, height: 23)
             button.setImage(UIImage(systemName: "repeat"), for: .normal)
             if repeatValue {
@@ -67,7 +73,7 @@ final class MyTableViewController: UITableViewController {
             } else {
                 button.tintColor = .black
             }
-        case 3:
+        case 4:
             button.frame = CGRect(x: 0, y: 0, width: 30, height: 23)
             button.setImage(UIImage(systemName: "shuffle"), for: .normal)
             if shuffle {
@@ -75,17 +81,14 @@ final class MyTableViewController: UITableViewController {
             } else {
                 button.tintColor = .black
             }
-        case 4:
-            button.setImage(UIImage(systemName: "timer"), for: .normal)
-            button.tintColor = .black
         default: break
         }
+        cell.textLabel?.text = text
         button.contentHorizontalAlignment = UIControl.ContentHorizontalAlignment.fill
         button.contentVerticalAlignment = UIControl.ContentVerticalAlignment.fill
         button.tag = indexPath.row
         cell.accessoryView = button
         button.addTarget(self, action: #selector(button(_:)), for: .touchUpInside)
-        //cell.backgroundColor = UIColor(red: 235/255, green: 225/255, blue: 170/255, alpha: 1.0)
         return cell
     }
     
@@ -94,9 +97,9 @@ final class MyTableViewController: UITableViewController {
         dismiss(animated: true, completion: nil)
         switch sender.tag {
         case 1: delegate?.changeTheme()
-        case 2: delegate?.repeatFunc()
-        case 3: delegate?.shuffleFunc()
-        case 4: delegate?.timerButton()
+        case 2: delegate?.timerButton()
+        case 3: delegate?.repeatFunc()
+        case 4: delegate?.shuffleFunc()
         default: break
         }
     }
